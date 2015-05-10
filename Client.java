@@ -147,19 +147,17 @@ public class Client{
     //Handler for Setup button
     //-----------------------
     class setupButtonListener implements ActionListener{
+        
         public void actionPerformed(ActionEvent e){
 
             System.out.println("Setup Button pressed !");      
             if (state == INIT) {
                 //Init non-blocking RTPsocket that will be used to receive data
-                
-                try{
-                  //construct a new DatagramSocket to receive RTP packets from the server, on port RTP_RCV_PORT
-                  //RTPsocket = ...
-
-                  //set TimeOut value of the socket to 5msec.
-                  //....
-
+                try {
+                    //construct a new DatagramSocket to receive RTP packets from the server, on port RTP_RCV_PORT
+                    RTPsocket = new DatagramSocket(RTP_RCV_PORT);
+                    //set TimeOut value of the socket to 5msec.
+                    RTPsocket.setSoTimeout(5);
                 }
                 catch (SocketException se)
                 {
@@ -178,11 +176,12 @@ public class Client{
                     System.out.println("Invalid Server Response");
                 else 
                 {
-                //change RTSP state and print new state 
-                //state = ....
-                //System.out.println("New RTSP state: ....");
+                    //change RTSP state and print new state 
+                    state = READY;
+                    System.out.println("New RTSP state: READY");
                 }
-            }//else if state != INIT then do nothing
+            }
+            //else if state != INIT then do nothing
         }
     }
     
