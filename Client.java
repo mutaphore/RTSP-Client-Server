@@ -66,9 +66,9 @@ public class Client{
      
         //Frame
         f.addWindowListener(new WindowAdapter() {
-           public void windowClosing(WindowEvent e) {
-    	 System.exit(0);
-           }
+            public void windowClosing(WindowEvent e) {
+                System.exit(0);
+            }
         });
 
         //Buttons
@@ -149,29 +149,29 @@ public class Client{
     class setupButtonListener implements ActionListener{
         public void actionPerformed(ActionEvent e){
 
-            //System.out.println("Setup Button pressed !");      
-            if (state == INIT) 
-            {
-            //Init non-blocking RTPsocket that will be used to receive data
-            try{
-              //construct a new DatagramSocket to receive RTP packets from the server, on port RTP_RCV_PORT
-              //RTPsocket = ...
+            System.out.println("Setup Button pressed !");      
+            if (state == INIT) {
+                //Init non-blocking RTPsocket that will be used to receive data
+                
+                try{
+                  //construct a new DatagramSocket to receive RTP packets from the server, on port RTP_RCV_PORT
+                  //RTPsocket = ...
 
-              //set TimeOut value of the socket to 5msec.
-              //....
+                  //set TimeOut value of the socket to 5msec.
+                  //....
 
-            }
-            catch (SocketException se)
-            {
-                System.out.println("Socket exception: "+se);
-                System.exit(0);
-            }
+                }
+                catch (SocketException se)
+                {
+                    System.out.println("Socket exception: "+se);
+                    System.exit(0);
+                }
 
-            //init RTSP sequence number
-            RTSPSeqNb = 1;
+                //init RTSP sequence number
+                RTSPSeqNb = 1;
 
-            //Send SETUP message to the server
-            send_RTSP_request("SETUP");
+                //Send SETUP message to the server
+                send_RTSP_request("SETUP");
 
                 //Wait for the response 
                 if (parse_server_response() != 200)
@@ -205,7 +205,7 @@ public class Client{
                 if (parse_server_response() != 200)
                     System.out.println("Invalid Server Response");
                 else 
-          	    {
+                {
                     //change RTSP state and print out new state
                     //.....
                     // System.out.println("New RTSP state: ...")
@@ -226,7 +226,7 @@ public class Client{
             //System.out.println("Pause Button pressed !");   
 
             if (state == PLAYING) 
-          	{
+            {
                 //increase RTSP sequence number
                 //........
 
@@ -238,12 +238,12 @@ public class Client{
                     System.out.println("Invalid Server Response");
                 else 
                 {
-            	      //change RTSP state and print out new state
-            	      //........
-            	      //System.out.println("New RTSP state: ...");
-            	      
-            	      //stop the timer
-            	      timer.stop();
+                      //change RTSP state and print out new state
+                      //........
+                      //System.out.println("New RTSP state: ...");
+                      
+                      //stop the timer
+                      timer.stop();
                 }
             }
             //else if state != PLAYING then do nothing
@@ -266,17 +266,17 @@ public class Client{
 
             //Wait for the response 
             if (parse_server_response() != 200)
-              	System.out.println("Invalid Server Response");
+                System.out.println("Invalid Server Response");
             else {     
-            	  //change RTSP state and print out new state
-            	  //........
-            	  //System.out.println("New RTSP state: ...");
+                  //change RTSP state and print out new state
+                  //........
+                  //System.out.println("New RTSP state: ...");
 
-            	  //stop the timer
-            	  timer.stop();
+                  //stop the timer
+                  timer.stop();
 
-            	  //exit
-            	  System.exit(0);
+                  //exit
+                  System.exit(0);
             }
         }
     }
@@ -359,8 +359,8 @@ public class Client{
                 RTSPid = Integer.parseInt(tokens.nextToken());
             }
         } catch(Exception ex) {
-          	System.out.println("Exception caught: "+ex);
-          	System.exit(0);
+            System.out.println("Exception caught: "+ex);
+            System.exit(0);
         }
       
         return(reply_code);
