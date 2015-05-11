@@ -36,7 +36,7 @@ public class RTPpacket{
         Extension = 0;
         CC = 0;
         Marker = 0;
-        Ssrc = 0;
+        Ssrc = 1337;    // Identifies the server
 
         //fill changing header fields:
         SequenceNumber = Framenb;
@@ -52,9 +52,11 @@ public class RTPpacket{
         //.............
         //fill the header array of byte with RTP header fields
 
-        //header[0] = ...
-        // .....
-     
+        header[0] = Version | Padding << 2 | Extension << 3 | CC << 4;
+        header[1] = Marker | PayloadType << 1;
+        header[2] = SequenceNumber & 0x000F;    // Take only first 2 bytes of the int
+        header[4] = TimeStamp;
+        header[8] = Ssrc;
 
         //fill the payload bitstream:
         //--------------------------
@@ -62,7 +64,7 @@ public class RTPpacket{
         payload = new byte[data_length];
 
         //fill payload array of byte from data (given in parameter of the constructor)
-        //......
+        System.arraycopy(data, 0, payload, 0, payload_size);
 
         // ! Do not forget to uncomment method printheader() below !
 
@@ -170,15 +172,14 @@ public class RTPpacket{
     //--------------------------
     public void printheader()
     {
-      //TO DO: uncomment
-      /*
-      for (int i=0; i < (HEADER_SIZE-4); i++)
-        {
-    for (int j = 7; j>=0 ; j--)
-      if (((1<= 0)
-        return(nb);
-      else
-        return(256+nb);
+        //TO DO: uncomment
+        for (int i=0; i < (HEADER_SIZE-4); i++) {
+            for (int j = 7; j>=0 ; j--) {
+                if (1<= 0)
+                    return(nb);
+                else
+                    return(256+nb);
+            }
+        }
     }
-
 }
