@@ -64,9 +64,11 @@ public class Client{
 
     //Statistics variables:
     //------------------
-    int statTotalBytes;     //Total number of bytes received in a session
-    double statStartTime;     //Time in milliseconds when start is pressed
-    double statTotalPlayTime;      //Time in milliseconds of video playing since beginning
+    int statTotalBytes;         //Total number of bytes received in a session
+    double statStartTime;       //Time in milliseconds when start is pressed
+    double statTotalPlayTime;   //Time in milliseconds of video playing since beginning
+    int statPktLost;            //Number of packets lost
+    int statRTPNb;              //Sequence number of expected RTP messages within the session
    
     //--------------------------
     //Constructor
@@ -98,7 +100,7 @@ public class Client{
 
         //Statistics
         statLabel1.setText("Total Bytes Received: 0");
-        statLabel2.setText("Packet Loss Rate: 0");
+        statLabel2.setText("Packets Lost: 0");
         statLabel3.setText("Data Rate (bytes/sec): 0");
 
         //Image display label
@@ -323,8 +325,11 @@ public class Client{
             rcvdp = new DatagramPacket(buf, buf.length);
 
             try {
-                //receive the DP from the socket:
+                //receive the DP from the socket, save time for stats
                 RTPsocket.receive(rcvdp);
+                statTotalPlayTime += System.currentTimeMillis() - statStartTime; 
+                //keep track of sequence number for dropped packets stats
+                statRTPNb++;
 
                 //create an RTPpacket object from the DP
                 RTPpacket rtp_packet = new RTPpacket(rcvdp.getData(), rcvdp.getLength());
@@ -343,8 +348,9 @@ public class Client{
                 rtp_packet.getpayload(payload);
 
                 //compute stats
+                if (statRTPNb != rtp_packet.getsequencenumber())
+                    statPktLost++;
                 statTotalBytes += payload_length;
-                statTotalPlayTime = rtp_packet.gettimestamp();
                 setStats();
 
                 //check if this is a meta data packet containing describe info
@@ -369,6 +375,9 @@ public class Client{
             catch (IOException ioe) {
                 System.out.println("Exception caught: "+ioe);
             }
+
+            // Start capturing the time for the next cycle
+            statStartTime = System.currentTimeMillis();
         }
     }
 
@@ -439,7 +448,7 @@ public class Client{
         double dataRate = statTotalPlayTime == 0 ? 0 : (statTotalBytes / (statTotalPlayTime / 1000.0));
         DecimalFormat formatter = new DecimalFormat("###,###.#");
         statLabel1.setText("Total Bytes Received: " + statTotalBytes);
-        statLabel2.setText("Packet Loss Rate: " + 0);
+        statLabel2.setText("Packets Lost: " + statPktLost);
         statLabel3.setText("Data Rate: " + formatter.format(dataRate) + " bytes/s");
     }
 

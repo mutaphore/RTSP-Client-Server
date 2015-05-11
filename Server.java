@@ -244,9 +244,12 @@ public class Server extends JFrame implements ActionListener
     // Send a RTP packet containing Metadata back to client
     public int sendRtpMeta(String s) {
         byte[] buf = s.getBytes();
-        RTPpacket rtp_packet = new RTPpacket(META_TYPE, 0, 0, buf, buf.length);
+
+        imagenb++;
+        RTPpacket rtp_packet = new RTPpacket(META_TYPE, imagenb, 0, buf, buf.length);
         int packet_length = rtp_packet.getlength();
         byte[] packet_bits = new byte[packet_length];
+
         rtp_packet.getpacket(packet_bits);
         senddp = new DatagramPacket(packet_bits, packet_length, ClientIPAddr, RTP_dest_port);
 
