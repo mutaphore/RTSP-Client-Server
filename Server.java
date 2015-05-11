@@ -124,12 +124,10 @@ public class Server extends JFrame implements ActionListener
         //Wait for the SETUP message from the client
         int request_type;
         boolean done = false;
-        while(!done)
-        {
+        while(!done) {
             request_type = theServer.parse_RTSP_request(); //blocking
     
-            if (request_type == SETUP)
-            {
+            if (request_type == SETUP) {
                 done = true;
 
                 //update RTSP state
@@ -148,13 +146,11 @@ public class Server extends JFrame implements ActionListener
         }
 
         //loop to handle RTSP requests
-        while(true)
-        {
+        while(true) {
             //parse the request
             request_type = theServer.parse_RTSP_request(); //blocking
                 
-            if ((request_type == PLAY) && (state == READY))
-            {
+            if ((request_type == PLAY) && (state == READY)) {
                 //send back response
                 theServer.send_RTSP_response();
                 //start timer
@@ -163,8 +159,7 @@ public class Server extends JFrame implements ActionListener
                 state = PLAYING;
                 System.out.println("New RTSP state: PLAYING");
             }
-            else if ((request_type == PAUSE) && (state == PLAYING))
-            {
+            else if ((request_type == PAUSE) && (state == PLAYING)) {
                 //send back response
                 theServer.send_RTSP_response();
                 //stop timer
@@ -173,8 +168,7 @@ public class Server extends JFrame implements ActionListener
                 state = READY;
                 System.out.println("New RTSP state: READY");
             }
-            else if (request_type == TEARDOWN)
-            {
+            else if (request_type == TEARDOWN) {
                 //send back response
                 theServer.send_RTSP_response();
                 //stop timer
@@ -184,6 +178,13 @@ public class Server extends JFrame implements ActionListener
                 theServer.RTPsocket.close();
 
                 System.exit(0);
+            }
+            else if (request_type == DESCRIBE) {
+                StringWriter writer = new StringWriter();
+                writer.write("DESCRIBE" + CRLF);
+                writer.write("THIS IS A TEST!" + CRLF);
+                theServer.send_RTSP_response();
+                theServer.sendRtp(writer.toString());
             }
         }
     }
@@ -224,17 +225,34 @@ public class Server extends JFrame implements ActionListener
                 //update GUI
                 label.setText("Send frame #" + imagenb);
             }
-            catch(Exception ex)
-            {
+            catch(Exception ex) {
                 System.out.println("Exception caught: "+ex);
                 System.exit(0);
             }
         }
-        else
-        {
+        else {
             //if we have reached the end of the video file, stop the timer
             timer.stop();
         }
+    }
+
+    // Writes string to the RTP stream back to client
+    public int sendRtp(String s) {
+        byte[] packet = s.getBytes();
+        DatagramPacket dp = new DatagramPacket(packet, packet.length, ClientIPAddr, RTP_dest_port);
+
+        // Stop the timer so we don't collide with video packets
+        timer.stop();
+        try {
+            RTPsocket.send(dp);
+            System.out.println("Send string:\n " + s);
+        } catch (Exception ex) {
+            System.out.println("Exception caught: "+ex);
+            System.exit(0);
+        }
+        // Resume sending the video
+        timer.start();
+        return 0;
     }
 
     //------------------------------------

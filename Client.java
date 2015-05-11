@@ -20,6 +20,7 @@ public class Client{
     JButton playButton = new JButton("Play");
     JButton pauseButton = new JButton("Pause");
     JButton tearButton = new JButton("Teardown");
+    JButton describeButton = new JButton("Describe");
     JPanel mainPanel = new JPanel();
     JPanel buttonPanel = new JPanel();
     JLabel iconLabel = new JLabel();
@@ -77,10 +78,12 @@ public class Client{
         buttonPanel.add(playButton);
         buttonPanel.add(pauseButton);
         buttonPanel.add(tearButton);
+        buttonPanel.add(describeButton);
         setupButton.addActionListener(new setupButtonListener());
         playButton.addActionListener(new playButtonListener());
         pauseButton.addActionListener(new pauseButtonListener());
         tearButton.addActionListener(new tearButtonListener());
+        describeButton.addActionListener(new describeListener());
 
         //Image display label
         iconLabel.setIcon(null);
@@ -298,6 +301,10 @@ public class Client{
             try{
                 //receive the DP from the socket:
                 RTPsocket.receive(rcvdp);
+
+                //check if this is a describe packet
+                String s = new String(rcvdp.getData());
+                System.out.println(s);
                   
                 //create an RTPpacket object from the DP
                 RTPpacket rtp_packet = new RTPpacket(rcvdp.getData(), rcvdp.getLength());
@@ -411,21 +418,24 @@ public class Client{
     }
 
     // Get information about the data stream
-    private void describe() {
-        System.out.println("Sending describe message");  
+    class describeListener implements ActionListener {
 
-        //increase RTSP sequence number
-        RTSPSeqNb++;
+        public void actionPerformed(ActionEvent e) {
+            System.out.println("Sending describe message");  
 
-        //Send DESCRIBE message to the server
-        send_RTSP_request("DESCRIBE");
+            //increase RTSP sequence number
+            RTSPSeqNb++;
 
-        //Wait for the response 
-        if (parse_server_response() != 200)
-            System.out.println("Invalid Server Response");
-        else {     
-            System.out.println("Received response for DESCRIBE");
-            // TODO: Process the describe message from server
+            //Send DESCRIBE message to the server
+            send_RTSP_request("DESCRIBE");
+
+            //Wait for the response 
+            if (parse_server_response() != 200)
+                System.out.println("Invalid Server Response");
+            else {     
+                System.out.println("Received response for DESCRIBE");
+                // TODO: Process the describe message from server
+            }
         }
     }
 }
