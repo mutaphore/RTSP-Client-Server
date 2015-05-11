@@ -216,7 +216,7 @@ public class Server extends JFrame implements ActionListener
                 senddp = new DatagramPacket(packet_bits, packet_length, ClientIPAddr, RTP_dest_port);
                 RTPsocket.send(senddp);
 
-                //System.out.println("Send frame #"+imagenb);
+                System.out.println("Send frame #"+imagenb);
                 //print the header bitstream
                 rtp_packet.printheader();
 
@@ -245,7 +245,7 @@ public class Server extends JFrame implements ActionListener
         try { 
             //parse request line and extract the request_type:
             String RequestLine = RTSPBufferedReader.readLine();
-            //System.out.println("RTSP Server - Received from Client:");
+            System.out.println("RTSP Server - Received from Client:");
             System.out.println(RequestLine);
 
             StringTokenizer tokens = new StringTokenizer(RequestLine);
@@ -300,12 +300,12 @@ public class Server extends JFrame implements ActionListener
     //------------------------------------
     private void send_RTSP_response()
     {
-        try{
-          RTSPBufferedWriter.write("RTSP/1.0 200 OK"+CRLF);
-          RTSPBufferedWriter.write("CSeq: "+RTSPSeqNb+CRLF);
-          RTSPBufferedWriter.write("Session: "+RTSP_ID+CRLF);
-          RTSPBufferedWriter.flush();
-          //System.out.println("RTSP Server - Sent response to Client.");
+        try {
+            RTSPBufferedWriter.write("RTSP/1.0 200 OK"+CRLF);
+            RTSPBufferedWriter.write("CSeq: "+RTSPSeqNb+CRLF);
+            RTSPBufferedWriter.write("Session: "+RTSP_ID+CRLF);
+            RTSPBufferedWriter.flush();
+            System.out.println("RTSP Server - Sent response to Client.");
         } catch(Exception ex) {
             System.out.println("Exception caught: "+ex);
             System.exit(0);

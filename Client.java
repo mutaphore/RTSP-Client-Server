@@ -340,7 +340,7 @@ public class Client{
         try{
             //parse status line and extract the reply_code:
             String StatusLine = RTSPBufferedReader.readLine();
-            //System.out.println("RTSP Client - Received from Server:");
+            System.out.println("RTSP Client - Received from Server:");
             System.out.println(StatusLine);
           
             StringTokenizer tokens = new StringTokenizer(StatusLine);
