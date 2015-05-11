@@ -32,6 +32,7 @@ public class Server extends JFrame implements ActionListener
     int imagenb = 0; //image nb of the image currently transmitted
     VideoStream video; //VideoStream object used to access video frames
     static int MJPEG_TYPE = 26; //RTP payload type for MJPEG video
+    static int META_TYPE = 35;  //RTP payload type for Metadata, used by describe
     static int FRAME_PERIOD = 100; //Frame period of the video to stream, in ms
     static int VIDEO_LENGTH = 500; //length of the video in frames
 
@@ -184,7 +185,7 @@ public class Server extends JFrame implements ActionListener
                 writer.write("DESCRIBE" + CRLF);
                 writer.write("THIS IS A TEST!" + CRLF);
                 theServer.send_RTSP_response();
-                theServer.sendRtp(writer.toString());
+                theServer.sendRtpMeta(writer.toString());
             }
         }
     }
@@ -236,23 +237,28 @@ public class Server extends JFrame implements ActionListener
         }
     }
 
-    // Writes string to the RTP stream back to client
-    public int sendRtp(String s) {
-        byte[] packet = s.getBytes();
-        DatagramPacket dp = new DatagramPacket(packet, packet.length, ClientIPAddr, RTP_dest_port);
+    // Send a RTP packet containing Metadata back to client
+    public int sendRtpMeta(String s) {
+        byte[] buf = s.getBytes();
+        RTPpacket rtp_packet = new RTPpacket(META_TYPE, 0, 0, buf, buf.length)
+        int packet_length = rtp_packet.getlength();
+        byte[] packet_bits = new byte[packet_length];
+        rtp_packet.getpacket(packet_bits);
+        senddp = new DatagramPacket(packet_bits, packet_length, ClientIPAddr, RTP_dest_port);
 
         // Stop the timer so we don't collide with video packets
         timer.stop();
         try {
-            RTPsocket.send(dp);
-            System.out.println("Send string:\n " + s);
+            RTPsocket.send(senddp);
+            System.out.println("Send RTP packet:\n " + s);
         } catch (Exception ex) {
             System.out.println("Exception caught: "+ex);
             System.exit(0);
         }
         // Resume sending the video
         timer.start();
-        return 0;
+
+        return packet_length;
     }
 
     //------------------------------------

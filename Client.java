@@ -32,6 +32,8 @@ public class Client{
     DatagramPacket rcvdp; //UDP packet received from the server
     DatagramSocket RTPsocket; //socket to be used to send and receive UDP packets
     static int RTP_RCV_PORT = 25000; //port where the client will receive the RTP packets
+    static int MJPEG_TYPE = 26; //RTP payload type for MJPEG video
+    static int META_TYPE = 35;  //RTP payload type for Metadata, used by describe
     
     Timer timer; //timer used to receive data from the UDP socket
     byte[] buf; //buffer used to store data received from the server 
@@ -302,12 +304,10 @@ public class Client{
                 //receive the DP from the socket:
                 RTPsocket.receive(rcvdp);
 
-                //check if this is a describe packet
-                String s = new String(rcvdp.getData());
-                System.out.println(s);
-                  
                 //create an RTPpacket object from the DP
                 RTPpacket rtp_packet = new RTPpacket(rcvdp.getData(), rcvdp.getLength());
+
+
 
                 //print important header fields of the RTP packet received: 
                 System.out.println("Got RTP packet with SeqNum # " + rtp_packet.getsequencenumber()
@@ -322,19 +322,48 @@ public class Client{
                 byte [] payload = new byte[payload_length];
                 rtp_packet.getpayload(payload);
 
-                //get an Image object from the payload bitstream
-                Toolkit toolkit = Toolkit.getDefaultToolkit();
-                Image image = toolkit.createImage(payload, 0, payload_length);
+                //check if this is a meta data packet containing describe info
+                if (rtp_packet.getpayloadtype() == META_TYPE) {
+                    System.out.println("Metadata");
+                    System.out.println(new String(payload));
+                }
+                else {
+                    //get an Image object from the payload bitstream
+                    Toolkit toolkit = Toolkit.getDefaultToolkit();
+                    Image image = toolkit.createImage(payload, 0, payload_length);
 
-                //display the image as an ImageIcon object
-                icon = new ImageIcon(image);
-                iconLabel.setIcon(icon);
+                    //display the image as an ImageIcon object
+                    icon = new ImageIcon(image);
+                    iconLabel.setIcon(icon);
+                }
             }
             catch (InterruptedIOException iioe){
                 System.out.println("Nothing to read");
             }
             catch (IOException ioe) {
                 System.out.println("Exception caught: "+ioe);
+            }
+        }
+    }
+
+    // Get information about the data stream
+    class describeListener implements ActionListener {
+
+        public void actionPerformed(ActionEvent e) {
+            System.out.println("Sending describe message");  
+
+            //increase RTSP sequence number
+            RTSPSeqNb++;
+
+            //Send DESCRIBE message to the server
+            send_RTSP_request("DESCRIBE");
+
+            //Wait for the response 
+            if (parse_server_response() != 200) {
+                System.out.println("Invalid Server Response");
+            }
+            else {     
+                System.out.println("Received response for DESCRIBE");
             }
         }
     }
@@ -415,29 +444,7 @@ public class Client{
             System.out.println("Exception caught: "+ex);
             System.exit(0);
         }
-    }
-
-    // Get information about the data stream
-    class describeListener implements ActionListener {
-
-        public void actionPerformed(ActionEvent e) {
-            System.out.println("Sending describe message");  
-
-            //increase RTSP sequence number
-            RTSPSeqNb++;
-
-            //Send DESCRIBE message to the server
-            send_RTSP_request("DESCRIBE");
-
-            //Wait for the response 
-            if (parse_server_response() != 200)
-                System.out.println("Invalid Server Response");
-            else {     
-                System.out.println("Received response for DESCRIBE");
-                // TODO: Process the describe message from server
-            }
-        }
-    }
+    }    
 }
 
 //end of Class Client
