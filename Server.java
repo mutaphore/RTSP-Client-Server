@@ -49,6 +49,7 @@ public class Server extends JFrame implements ActionListener
     final static int PLAY = 4;
     final static int PAUSE = 5;
     final static int TEARDOWN = 6;
+    final static int DESCRIBE = 7;
 
     static int state; //RTSP Server state == INIT or READY or PLAY
     Socket RTSPsocket; //socket used to send/receive RTSP messages
@@ -260,9 +261,10 @@ public class Server extends JFrame implements ActionListener
                 request_type = PAUSE;
             else if ((new String(request_type_string)).compareTo("TEARDOWN") == 0)
                 request_type = TEARDOWN;
+            else if ((new String(request_type_string)).compareTo("DESCRIBE") == 0)
+                request_type = DESCRIBE;
 
-            if (request_type == SETUP)
-            {
+            if (request_type == SETUP) {
                 //extract VideoFileName from RequestLine
                 VideoFileName = tokens.nextToken();
             }
@@ -278,15 +280,18 @@ public class Server extends JFrame implements ActionListener
             String LastLine = RTSPBufferedReader.readLine();
             System.out.println(LastLine);
 
-            if (request_type == SETUP)
-            {
+            tokens = new StringTokenizer(LastLine);
+            if (request_type == SETUP) {
                 //extract RTP_dest_port from LastLine
-                tokens = new StringTokenizer(LastLine);
                 for (int i=0; i<3; i++)
                     tokens.nextToken(); //skip unused stuff
                 RTP_dest_port = Integer.parseInt(tokens.nextToken());
             }
-            //else LastLine will be the SessionId line ... do not check for now.
+            else {
+                //otherwise LastLine will be the SessionId line
+                tokens.nextToken(); //skip Session:
+                RTSP_ID = Integer.parseInt(tokens.nextToken());
+            }
         } catch(Exception ex) {
             System.out.println("Exception caught: "+ex);
             System.exit(0);

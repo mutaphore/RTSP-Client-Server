@@ -173,7 +173,6 @@ public class RTPpacket{
         return(PayloadType);
     }
 
-
     //--------------------------
     //print headers without the SSRC
     //--------------------------

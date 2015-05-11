@@ -409,6 +409,25 @@ public class Client{
             System.exit(0);
         }
     }
+
+    // Get information about the data stream
+    private void describe() {
+        System.out.println("Sending describe message");  
+
+        //increase RTSP sequence number
+        RTSPSeqNb++;
+
+        //Send DESCRIBE message to the server
+        send_RTSP_request("DESCRIBE");
+
+        //Wait for the response 
+        if (parse_server_response() != 200)
+            System.out.println("Invalid Server Response");
+        else {     
+            System.out.println("Received response for DESCRIBE");
+            // TODO: Process the describe message from server
+        }
+    }
 }
 
 //end of Class Client
