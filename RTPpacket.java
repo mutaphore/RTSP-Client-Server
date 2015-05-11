@@ -55,17 +55,17 @@ public class RTPpacket{
         //fill the header array of byte with RTP header fields
 
         header[0] = (byte)(Version | Padding << 2 | Extension << 3 | CC << 4);
-        header[1] = (byte)(Marker | PayloadType << 1);
-        header[2] = (byte)(SequenceNumber & 0x000000FF);    
-        header[3] = (byte)((SequenceNumber & 0x0000FF00) >> 8);
-        header[4] = (byte)(TimeStamp & 0x000000FF);
-        header[5] = (byte)((TimeStamp & 0x0000FF00) >> 8);
-        header[6] = (byte)((TimeStamp & 0x00FF0000) >> 16);
-        header[7] = (byte)((TimeStamp & 0xFF000000) >> 24);
-        header[8] = (byte)(Ssrc & 0x000000FF);
-        header[9] = (byte)((Ssrc & 0x0000FF00) >> 8);
-        header[10] = (byte)((Ssrc & 0x00FF0000) >> 16);
-        header[11] = (byte)((Ssrc & 0xFF000000) >> 24);
+        header[1] = (byte)(Marker << 7 | PayloadType & 0x000000FF);
+        header[2] = (byte)(SequenceNumber >> 8);
+        header[3] = (byte)(SequenceNumber & 0xFF); 
+        header[4] = (byte)(TimeStamp >> 24);
+        header[5] = (byte)(TimeStamp >> 16);
+        header[6] = (byte)(TimeStamp >> 8);
+        header[7] = (byte)(TimeStamp & 0xFF);
+        header[8] = (byte)(Ssrc >> 24);
+        header[9] = (byte)(Ssrc >> 16);
+        header[10] = (byte)(Ssrc >> 8);
+        header[11] = (byte)(Ssrc & 0xFF);
 
         //fill the payload bitstream:
         //--------------------------
@@ -178,8 +178,16 @@ public class RTPpacket{
     //--------------------------
     public void printheader()
     {
-        byte[] temp = new byte[HEADER_SIZE - 4];
-        temp = Arrays.copyOf(header, HEADER_SIZE - 4);
-        System.out.println(Arrays.toString(temp));
+        System.out.print("[Header] ");
+        System.out.println("Version: " + Version 
+                           + " Padding: " + Padding
+                           + " Extension: " + Extension 
+                           + " CC: " + CC
+                           + " Marker: " + Marker 
+                           + " PayloadType: " + PayloadType
+                           + " SequenceNumber: " + SequenceNumber
+                           + " TimeStamp: " + TimeStamp
+                           + " Ssrc: " + Ssrc);
+
     }
 }
