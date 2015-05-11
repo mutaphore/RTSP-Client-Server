@@ -182,8 +182,13 @@ public class Server extends JFrame implements ActionListener
             }
             else if (request_type == DESCRIBE) {
                 StringWriter writer = new StringWriter();
-                writer.write("DESCRIBE" + CRLF);
-                writer.write("THIS IS A TEST!" + CRLF);
+                writer.write("Session Information\n\n");
+                writer.write("RTSP Session ID: " + RTSP_ID + "\n");
+                writer.write("Filename: " + VideoFileName + "\n");
+                writer.write("Payload Type: " + MJPEG_TYPE + "\n");
+                writer.write("Frame Period: " + FRAME_PERIOD + "\n");
+                writer.write("Video Length: " + VIDEO_LENGTH);
+
                 theServer.send_RTSP_response();
                 theServer.sendRtpMeta(writer.toString());
             }
@@ -196,8 +201,7 @@ public class Server extends JFrame implements ActionListener
     public void actionPerformed(ActionEvent e) {
 
         //if the current image nb is less than the length of the video
-        if (imagenb < VIDEO_LENGTH)
-        {
+        if (imagenb < VIDEO_LENGTH) {
             //update current imagenb
             imagenb++;
 
@@ -240,7 +244,7 @@ public class Server extends JFrame implements ActionListener
     // Send a RTP packet containing Metadata back to client
     public int sendRtpMeta(String s) {
         byte[] buf = s.getBytes();
-        RTPpacket rtp_packet = new RTPpacket(META_TYPE, 0, 0, buf, buf.length)
+        RTPpacket rtp_packet = new RTPpacket(META_TYPE, 0, 0, buf, buf.length);
         int packet_length = rtp_packet.getlength();
         byte[] packet_bits = new byte[packet_length];
         rtp_packet.getpacket(packet_bits);
@@ -250,7 +254,7 @@ public class Server extends JFrame implements ActionListener
         timer.stop();
         try {
             RTPsocket.send(senddp);
-            System.out.println("Send RTP packet:\n " + s);
+            System.out.println("Sent RTP Metadata packet");
         } catch (Exception ex) {
             System.out.println("Exception caught: "+ex);
             System.exit(0);

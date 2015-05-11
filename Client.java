@@ -6,6 +6,7 @@
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import java.text.*;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
@@ -19,21 +20,21 @@ public class Client{
     JButton setupButton = new JButton("Setup");
     JButton playButton = new JButton("Play");
     JButton pauseButton = new JButton("Pause");
-    JButton tearButton = new JButton("Teardown");
-    JButton describeButton = new JButton("Describe");
+    JButton tearButton = new JButton("Close");
+    JButton describeButton = new JButton("Session");
     JPanel mainPanel = new JPanel();
     JPanel buttonPanel = new JPanel();
+    JLabel statLabel1 = new JLabel();
+    JLabel statLabel2 = new JLabel();
+    JLabel statLabel3 = new JLabel();
     JLabel iconLabel = new JLabel();
     ImageIcon icon;
-
 
     //RTP variables:
     //----------------
     DatagramPacket rcvdp; //UDP packet received from the server
     DatagramSocket RTPsocket; //socket to be used to send and receive UDP packets
     static int RTP_RCV_PORT = 25000; //port where the client will receive the RTP packets
-    static int MJPEG_TYPE = 26; //RTP payload type for MJPEG video
-    static int META_TYPE = 35;  //RTP payload type for Metadata, used by describe
     
     Timer timer; //timer used to receive data from the UDP socket
     byte[] buf; //buffer used to store data received from the server 
@@ -54,10 +55,18 @@ public class Client{
     int RTSPid = 0; // ID of the RTSP session (given by the RTSP Server)
 
     final static String CRLF = "\r\n";
+    final static String DES_FNAME = "session_info.txt";
 
     //Video constants:
     //------------------
     static int MJPEG_TYPE = 26; //RTP payload type for MJPEG video
+    static int META_TYPE = 35;  //RTP payload type for Metadata, used by describe
+
+    //Statistics variables:
+    //------------------
+    int statTotalBytes;     //Total number of bytes received in a session
+    double statStartTime;     //Time in milliseconds when start is pressed
+    double statTotalPlayTime;      //Time in milliseconds of video playing since beginning
    
     //--------------------------
     //Constructor
@@ -87,6 +96,11 @@ public class Client{
         tearButton.addActionListener(new tearButtonListener());
         describeButton.addActionListener(new describeListener());
 
+        //Statistics
+        statLabel1.setText("Total Bytes Received: 0");
+        statLabel2.setText("Packet Loss Rate: 0");
+        statLabel3.setText("Data Rate (bytes/sec): 0");
+
         //Image display label
         iconLabel.setIcon(null);
         
@@ -94,11 +108,17 @@ public class Client{
         mainPanel.setLayout(null);
         mainPanel.add(iconLabel);
         mainPanel.add(buttonPanel);
+        mainPanel.add(statLabel1);
+        mainPanel.add(statLabel2);
+        mainPanel.add(statLabel3);
         iconLabel.setBounds(0,0,380,280);
         buttonPanel.setBounds(0,280,380,50);
+        statLabel1.setBounds(0,330,380,20);
+        statLabel2.setBounds(0,350,380,20);
+        statLabel3.setBounds(0,370,380,20);
 
         f.getContentPane().add(mainPanel, BorderLayout.CENTER);
-        f.setSize(new Dimension(390,370));
+        f.setSize(new Dimension(380,420));
         f.setVisible(true);
 
         //init timer
@@ -194,12 +214,14 @@ public class Client{
     //-----------------------
     class playButtonListener implements ActionListener {
 
-        public void actionPerformed(ActionEvent e){
+        public void actionPerformed(ActionEvent e) {
 
             System.out.println("Play Button pressed!"); 
 
-            if (state == READY) 
-            {
+            //Start to save the time in stats
+            statStartTime = System.currentTimeMillis();
+
+            if (state == READY) {
                 //increase RTSP sequence number
                 RTSPSeqNb++;
 
@@ -207,10 +229,10 @@ public class Client{
                 send_RTSP_request("PLAY");
 
                 //Wait for the response 
-                if (parse_server_response() != 200)
+                if (parse_server_response() != 200) {
                     System.out.println("Invalid Server Response");
-                else 
-                {
+                }
+                else {
                     //change RTSP state and print out new state
                     state = PLAYING;
                     System.out.println("New RTSP state: PLAYING");
@@ -300,14 +322,12 @@ public class Client{
             //Construct a DatagramPacket to receive data from the UDP socket
             rcvdp = new DatagramPacket(buf, buf.length);
 
-            try{
+            try {
                 //receive the DP from the socket:
                 RTPsocket.receive(rcvdp);
 
                 //create an RTPpacket object from the DP
                 RTPpacket rtp_packet = new RTPpacket(rcvdp.getData(), rcvdp.getLength());
-
-
 
                 //print important header fields of the RTP packet received: 
                 System.out.println("Got RTP packet with SeqNum # " + rtp_packet.getsequencenumber()
@@ -322,10 +342,16 @@ public class Client{
                 byte [] payload = new byte[payload_length];
                 rtp_packet.getpayload(payload);
 
+                //compute stats
+                statTotalBytes += payload_length;
+                statTotalPlayTime = rtp_packet.gettimestamp();
+                setStats();
+
                 //check if this is a meta data packet containing describe info
                 if (rtp_packet.getpayloadtype() == META_TYPE) {
-                    System.out.println("Metadata");
-                    System.out.println(new String(payload));
+                    PrintWriter writer = new PrintWriter(DES_FNAME, "UTF-8");
+                    writer.println(new String(payload));
+                    writer.close();
                 }
                 else {
                     //get an Image object from the payload bitstream
@@ -337,7 +363,7 @@ public class Client{
                     iconLabel.setIcon(icon);
                 }
             }
-            catch (InterruptedIOException iioe){
+            catch (InterruptedIOException iioe) {
                 System.out.println("Nothing to read");
             }
             catch (IOException ioe) {
@@ -407,6 +433,14 @@ public class Client{
         }
       
         return(reply_code);
+    }
+
+    private void setStats() {
+        double dataRate = statTotalPlayTime == 0 ? 0 : (statTotalBytes / (statTotalPlayTime / 1000.0));
+        DecimalFormat formatter = new DecimalFormat("###,###.#");
+        statLabel1.setText("Total Bytes Received: " + statTotalBytes);
+        statLabel2.setText("Packet Loss Rate: " + 0);
+        statLabel3.setText("Data Rate: " + formatter.format(dataRate) + " bytes/s");
     }
 
     //------------------------------------
