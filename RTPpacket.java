@@ -1,5 +1,7 @@
 //class RTPpacket
 
+import java.util.*;
+
 public class RTPpacket{
 
     //size of the RTP header:
@@ -52,11 +54,18 @@ public class RTPpacket{
         //.............
         //fill the header array of byte with RTP header fields
 
-        header[0] = Version | Padding << 2 | Extension << 3 | CC << 4;
-        header[1] = Marker | PayloadType << 1;
-        header[2] = SequenceNumber & 0x0000FFFF;    // Take only first 2 bytes of the int
-        header[4] = TimeStamp;
-        header[8] = Ssrc;
+        header[0] = (byte)(Version | Padding << 2 | Extension << 3 | CC << 4);
+        header[1] = (byte)(Marker | PayloadType << 1);
+        header[2] = (byte)(SequenceNumber & 0x000000FF);    
+        header[3] = (byte)((SequenceNumber & 0x0000FF00) >> 8);
+        header[4] = (byte)(TimeStamp & 0x000000FF);
+        header[5] = (byte)((TimeStamp & 0x0000FF00) >> 8);
+        header[6] = (byte)((TimeStamp & 0x00FF0000) >> 16);
+        header[7] = (byte)((TimeStamp & 0xFF000000) >> 24);
+        header[8] = (byte)(Ssrc & 0x000000FF);
+        header[9] = (byte)((Ssrc & 0x0000FF00) >> 8);
+        header[10] = (byte)((Ssrc & 0x00FF0000) >> 16);
+        header[11] = (byte)((Ssrc & 0xFF000000) >> 24);
 
         //fill the payload bitstream:
         //--------------------------
@@ -64,7 +73,7 @@ public class RTPpacket{
         payload = new byte[data_length];
 
         //fill payload array of byte from data (given in parameter of the constructor)
-        payload = Array.copyOf(data, payload_size);
+        payload = Arrays.copyOf(data, payload_size);
     }
       
     //--------------------------
@@ -96,8 +105,8 @@ public class RTPpacket{
 
             //interpret the changing fields of the header:
             PayloadType = header[1] & 127;
-            SequenceNumber = unsigned_int(header[3]) + 256*unsigned_int(header[2]);
-            TimeStamp = unsigned_int(header[7]) + 256*unsigned_int(header[6]) + 65536*unsigned_int(header[5]) + 16777216*unsigned_int(header[4]);
+            SequenceNumber = header[3] + 256*header[2];
+            TimeStamp = header[7] + 256*header[6] + 65536*header[5] + 16777216*header[4];
         }
    }
 
@@ -170,7 +179,7 @@ public class RTPpacket{
     public void printheader()
     {
         byte[] temp = new byte[HEADER_SIZE - 4];
-        temp = Array.copyOf(header, HEADER_SIZE - 4);
-        System.out.println(Array.toString(temp));
+        temp = Arrays.copyOf(header, HEADER_SIZE - 4);
+        System.out.println(Arrays.toString(temp));
     }
 }
