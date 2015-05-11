@@ -32,7 +32,6 @@ public class Server extends JFrame implements ActionListener
     int imagenb = 0; //image nb of the image currently transmitted
     VideoStream video; //VideoStream object used to access video frames
     static int MJPEG_TYPE = 26; //RTP payload type for MJPEG video
-    static int META_TYPE = 35;  //RTP payload type for Metadata, used by describe
     static int FRAME_PERIOD = 100; //Frame period of the video to stream, in ms
     static int VIDEO_LENGTH = 500; //length of the video in frames
 
@@ -181,16 +180,7 @@ public class Server extends JFrame implements ActionListener
                 System.exit(0);
             }
             else if (request_type == DESCRIBE) {
-                StringWriter writer = new StringWriter();
-                writer.write("Session Information\n\n");
-                writer.write("RTSP Session ID: " + RTSP_ID + "\n");
-                writer.write("Filename: " + VideoFileName + "\n");
-                writer.write("Payload Type: " + MJPEG_TYPE + "\n");
-                writer.write("Frame Period: " + FRAME_PERIOD + "\n");
-                writer.write("Video Length: " + VIDEO_LENGTH);
-
-                theServer.send_RTSP_response();
-                theServer.sendRtpMeta(writer.toString());
+                theServer.send_RTSP_describe();
             }
         }
     }
@@ -239,33 +229,6 @@ public class Server extends JFrame implements ActionListener
             //if we have reached the end of the video file, stop the timer
             timer.stop();
         }
-    }
-
-    // Send a RTP packet containing Metadata back to client
-    public int sendRtpMeta(String s) {
-        byte[] buf = s.getBytes();
-
-        imagenb++;
-        RTPpacket rtp_packet = new RTPpacket(META_TYPE, imagenb, 0, buf, buf.length);
-        int packet_length = rtp_packet.getlength();
-        byte[] packet_bits = new byte[packet_length];
-
-        rtp_packet.getpacket(packet_bits);
-        senddp = new DatagramPacket(packet_bits, packet_length, ClientIPAddr, RTP_dest_port);
-
-        // Stop the timer so we don't collide with video packets
-        timer.stop();
-        try {
-            RTPsocket.send(senddp);
-            System.out.println("Sent RTP Metadata packet");
-        } catch (Exception ex) {
-            System.out.println("Exception caught: "+ex);
-            System.exit(0);
-        }
-        // Resume sending the video
-        timer.start();
-
-        return packet_length;
     }
 
     //------------------------------------
@@ -334,13 +297,36 @@ public class Server extends JFrame implements ActionListener
     //------------------------------------
     //Send RTSP Response
     //------------------------------------
-    private void send_RTSP_response()
-    {
+    private void send_RTSP_response() {
         try {
             RTSPBufferedWriter.write("RTSP/1.0 200 OK"+CRLF);
             RTSPBufferedWriter.write("CSeq: "+RTSPSeqNb+CRLF);
             RTSPBufferedWriter.write("Session: "+RTSP_ID+CRLF);
             RTSPBufferedWriter.flush();
+            System.out.println("RTSP Server - Sent response to Client.");
+        } catch(Exception ex) {
+            System.out.println("Exception caught: "+ex);
+            System.exit(0);
+        }
+    }
+
+    // Creates a DESCRIBE response string for current media
+    private String createDescribeResponse() {
+        StringWriter writer = new StringWriter();
+        writer.write("Content-Base: " + VideoFileName + CRLF);
+        writer.write("Content-Type: " + "application/sdp" + CRLF + CRLF);
+        writer.write("v=0" + CRLF);
+        writer.write("m=video " + RTSPport + " RTP/AVP " + MJPEG_TYPE);
+        writer.write("a=control:streamid=" + RTSP_ID);
+        return writer.toString();
+    }
+
+    private void send_RTSP_describe() {
+        String des = createDescribeResponse();
+        try {
+            RTSPBufferedWriter.write("RTSP/1.0 200 OK"+CRLF);
+            RTSPBufferedWriter.write("CSeq: "+RTSPSeqNb+CRLF);
+            RTSPBufferedWriter.write(des);
             System.out.println("RTSP Server - Sent response to Client.");
         } catch(Exception ex) {
             System.out.println("Exception caught: "+ex);
