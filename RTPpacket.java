@@ -54,7 +54,7 @@ public class RTPpacket{
         //.............
         //fill the header array of byte with RTP header fields
 
-        header[0] = (byte)(Version | Padding << 2 | Extension << 3 | CC << 4);
+        header[0] = (byte)(Version << 6 | Padding << 2 | Extension << 3 | CC << 4);
         header[1] = (byte)(Marker << 7 | PayloadType & 0x000000FF);
         header[2] = (byte)(SequenceNumber >> 8);
         header[3] = (byte)(SequenceNumber & 0xFF); 
@@ -104,11 +104,12 @@ public class RTPpacket{
                 payload[i-HEADER_SIZE] = packet[i];
 
             //interpret the changing fields of the header:
-            PayloadType = header[1] & 127;
-            SequenceNumber = header[3] + 256*header[2];
-            TimeStamp = header[7] + 256*header[6] + 65536*header[5] + 16777216*header[4];
+            Version = (header[0] & 0xFF) >>> 6;
+            PayloadType = header[1] & 0x7F;
+            SequenceNumber = (header[3] & 0xFF) + ((header[2] & 0xFF) << 8);
+            TimeStamp = (header[7] & 0xFF) + ((header[6] & 0xFF) << 8) + ((header[5] & 0xFF) << 16) + ((header[4] & 0xFF) << 24);
         }
-   }
+    }
 
     //--------------------------
     //getpayload: return the payload bistream of the RTPpacket and its size
@@ -180,14 +181,13 @@ public class RTPpacket{
     {
         System.out.print("[Header] ");
         System.out.println("Version: " + Version 
-                           + " Padding: " + Padding
-                           + " Extension: " + Extension 
-                           + " CC: " + CC
-                           + " Marker: " + Marker 
-                           + " PayloadType: " + PayloadType
-                           + " SequenceNumber: " + SequenceNumber
-                           + " TimeStamp: " + TimeStamp
-                           + " Ssrc: " + Ssrc);
+                           + ", Padding: " + Padding
+                           + ", Extension: " + Extension 
+                           + ", CC: " + CC
+                           + ", Marker: " + Marker 
+                           + ", PayloadType: " + PayloadType
+                           + ", SequenceNumber: " + SequenceNumber
+                           + ", TimeStamp: " + TimeStamp);
 
     }
 }
