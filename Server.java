@@ -107,7 +107,7 @@ public class Server extends JFrame implements ActionListener
     public class ControlListener extends ActionListener {
 
         public void actionPerformed(ActionEvent e) {
-
+            //TODO: grab the packet and make decisions
         }
     }
           

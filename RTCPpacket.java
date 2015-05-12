@@ -1,4 +1,5 @@
 import java.util.*;
+import java.nio.*;
 
 // RR: Receiver Report RTCP Packet
 
@@ -27,21 +28,21 @@ class RTCPpacket {
     final static int HEADER_SIZE = 8;
     final static int BODY_SIZE = 24;
 
-	public int Version;
-    public int Padding;
-    public int RC; 		// Reception report count, 1 for now
-    public int PayloadType;
-    public int length;	// 1 source is always 32bytes: 8 header, 24 body
-    public int Ssrc;
-    public float fractionLost;
-    public int cumLost;
-    public int highSeqNb;	// Highest sequence number received
-    public int jitter;
-    public int LSR;
-    public int DLSR;
+	public int Version;			// Version number 2
+    public int Padding;			// Padding of packet
+    public int RC; 				// Reception report count = 1 for one receiver
+    public int PayloadType;		// 201 for Receiver Report
+    public int length;			// 1 source is always 32 bytes: 8 header, 24 body
+    public int Ssrc;			// Ssrc of sender
+    public float fractionLost;	// The fraction of RTP data packets from sender lost since the previous RR packet was sent
+    public int cumLost;			// The total number of RTP data packets from sender that have been lost since the beginning of reception.
+    public int highSeqNb;		// Highest sequence number received
+    public int jitter;			// Not used
+    public int LSR;				// Not used
+    public int DLSR;			// Not used
 
-    public byte[] header;	//Bitstream of header
-    public byte[] body;		//Bitstream of the body
+	public byte[] header;	//Bitstream of header
+	public byte[] body;		//Bitstream of the body
 
     // Constructor from field values
     public RTCPpacket(float fractionLost, int cumLost, int highSeqNb) {
@@ -61,7 +62,7 @@ class RTCPpacket {
     	body = new byte[BODY_SIZE];
 
    		header[0] = (byte)(Version << 6 | Padding << 5 | RC);
-        header[1] = (byte)(PayloadType & 0x000000FF);
+        header[1] = (byte)(PayloadType & 0xFF);
         header[2] = (byte)(length >> 8);
         header[3] = (byte)(length & 0xFF); 
         header[4] = (byte)(Ssrc >> 24);
@@ -73,15 +74,30 @@ class RTCPpacket {
 		bb.putFloat(fractionLost);
 		bb.putInt(cumLost);
 		bb.putInt(highSeqNb);
-		bb.putInt(jitter);
-		bb.putInt(LSR);
-		bb.putInt(DLSR);
     }
 
     // Constructor from bit stream
     public RTCPpacket(byte[] packet, int packet_size) {
-    	ByteBuffer wrapped = ByteBuffer.wrap(packet); // big-endian by default
-		Version = wrapped.getInt();
+
+    	header = new byte[HEADER_SIZE];
+    	body = new byte[BODY_SIZE];
+
+    	for (int i = 0; i < HEADER_SIZE; i++)
+    		header[i] = packet[i];
+    	for (int i = HEADER_SIZE; i < packet_size; i++)
+    		body[i - HEADER_SIZE] = packet[i];
+
+    	// Parse header fields
+        Version = (header[0] & 0xFF) >> 6;
+        PayloadType = header[1] & 0xFF;
+        length = (header[3] & 0xFF) + ((header[2] & 0xFF) << 8);
+        Ssrc = (header[7] & 0xFF) + ((header[6] & 0xFF) << 8) + ((header[5] & 0xFF) << 16) + ((header[4] & 0xFF) << 24);
+
+    	// Parse body fields
+    	ByteBuffer bb = ByteBuffer.wrap(body); // big-endian by default
+    	fractionLost = bb.getFloat();
+    	cumLost = bb.getInt();
+    	highSeqNb = bb.getInt();
     }
 
     //--------------------------
@@ -96,14 +112,14 @@ class RTCPpacket {
             packet[i+HEADER_SIZE] = body[i];
 
         //return total size of the packet
-        return(BODY_SIZE + HEADER_SIZE);
+        return (BODY_SIZE + HEADER_SIZE);
     }
 
     //--------------------------
     //getlength: return the total length of the RTCP packet
     //--------------------------
     public int getlength() {
-        return(BODY_SIZE + HEADER_SIZE);
+        return (BODY_SIZE + HEADER_SIZE);
     }
 
 }

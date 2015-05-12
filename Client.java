@@ -511,7 +511,7 @@ public class Client{
                 RTSPBufferedWriter.write("Transport: RTP/UDP; client_port= " + RTP_RCV_PORT + CRLF);
             }
             else if (request_type == "DESCRIBE") {
-                RTSPBufferedWriter.write("Accept: application/sdp, application/rtsl, application/mheg" + CRLF);
+                RTSPBufferedWriter.write("Accept: application/sdp" + CRLF);
             }
             else {
                 //otherwise, write the Session line from the RTSPid field
