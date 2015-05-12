@@ -47,6 +47,7 @@ public class Client{
     final static int PLAYING = 2;
     static int state; //RTSP state == INIT or READY or PLAYING
     Socket RTSPsocket; //socket used to send/receive RTSP messages
+    InetAddress ServerIPAddr;
     //input and output stream filters
     static BufferedReader RTSPBufferedReader;
     static BufferedWriter RTSPBufferedWriter;
@@ -155,14 +156,14 @@ public class Client{
         //------------------
         int RTSP_server_port = Integer.parseInt(argv[1]);
         String ServerHost = argv[0];
-        InetAddress ServerIPAddr = InetAddress.getByName(ServerHost);
+        theClient.ServerIPAddr = InetAddress.getByName(ServerHost);
 
         //get video filename to request:
         VideoFileName = argv[2];
 
         //Establish a TCP connection with the server to exchange RTSP messages
         //------------------
-        theClient.RTSPsocket = new Socket(ServerIPAddr, RTSP_server_port);
+        theClient.RTSPsocket = new Socket(theClient.ServerIPAddr, RTSP_server_port);
 
         //Establish a UDP connection with the server to exchange RTCP control packets
         //------------------
@@ -414,9 +415,9 @@ public class Client{
 
         public void actionPerformed(ActionEvent e) {
 
-            RTCPpacket rtcp_packet = new RTCPpacket(0.2, 10, 45);
+            RTCPpacket rtcp_packet = new RTCPpacket(0.2f, 10, 45);
             int packet_length = rtcp_packet.getlength();
-            byte[] packet_bits = byte[packet_length];
+            byte[] packet_bits = new byte[packet_length];
             rtcp_packet.getpacket(packet_bits);
 
             try {

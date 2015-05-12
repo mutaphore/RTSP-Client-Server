@@ -252,7 +252,7 @@ public class Server extends JFrame implements ActionListener
     }
 
     // A listener for RTCP packets sent from client
-    private class RTCPListener extends ActionListener {
+    public class RTCPListener implements ActionListener {
 
         public void actionPerformed(ActionEvent e) {
             //Construct a DatagramPacket to receive data from the UDP socket
