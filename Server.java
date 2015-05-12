@@ -65,7 +65,9 @@ public class Server extends JFrame implements ActionListener
     //RTCP variables
     //----------------
     DatagramSocket RTCPsocket;
+    Timer controlTimer;
     static int RTCP_RCV_PORT = 25001; //port where the client will receive the RTP packets
+    static int CTRL_PERIOD = 200;     // How often to check for control events
     
     final static String CRLF = "\r\n";
 
@@ -82,6 +84,10 @@ public class Server extends JFrame implements ActionListener
         timer.setInitialDelay(0);
         timer.setCoalesce(true);
 
+        controlTimer = new Timer(CTRL_PERIOD, new ControlListener());
+        controlTimer.setInitialDelay(0);
+        controlTimer.setCoalesce(true);
+
         //allocate memory for the sending buffer
         buf = new byte[15000]; 
 
@@ -96,6 +102,13 @@ public class Server extends JFrame implements ActionListener
         //GUI:
         label = new JLabel("Send frame #        ", JLabel.CENTER);
         getContentPane().add(label, BorderLayout.CENTER);
+    }
+
+    public class ControlListener extends ActionListener {
+
+        public void actionPerformed(ActionEvent e) {
+
+        }
     }
           
     //------------------------------------

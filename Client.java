@@ -414,15 +414,13 @@ public class Client{
 
         public void actionPerformed(ActionEvent e) {
 
-            DatagramPacket ctrldp;
-            byte[] 
-            int packet_length;
+            RTCPpacket rtcp_packet = new RTCPpacket();
+            int packet_length = rtcp_packet.getlength();
+            byte[] packet_bits = byte[packet_length];
 
             try {
-
-                ctrldp = new DatagramPacket(packet_bits, packet_length, ClientIPAddr, RTP_dest_port);
+                DatagramPacket ctrldp = new DatagramPacket(packet_bits, packet_length, ServerIPAddr, RTCP_RCV_PORT);
                 RTCPsocket.send(ctrldp);
-
             } catch (InterruptedIOException iioe) {
                 System.out.println("Nothing to read");
             } catch (IOException ioe) {

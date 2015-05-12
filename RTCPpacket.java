@@ -33,7 +33,7 @@ class RTCPpacket {
     public int PayloadType;
     public int length;	// 1 source is always 32bytes: 8 header, 24 body
     public int Ssrc;
-    public int fractionLost;
+    public float fractionLost;
     public int cumLost;
     public int highSeqNb;	// Highest sequence number received
     public int jitter;
@@ -44,7 +44,7 @@ class RTCPpacket {
     public byte[] body;		//Bitstream of the body
 
     // Constructor from field values
-    public RTCPpacket(int fractionLost, int cumLost, int highSeqNb) {
+    public RTCPpacket(float fractionLost, int cumLost, int highSeqNb) {
     	Version = 2;
     	Padding = 0;
     	RC = 1;
@@ -70,7 +70,7 @@ class RTCPpacket {
         header[7] = (byte)(Ssrc & 0xFF);
 
 		ByteBuffer bb = ByteBuffer.wrap(body);
-		bb.putInt(fractionLost);
+		bb.putFloat(fractionLost);
 		bb.putInt(cumLost);
 		bb.putInt(highSeqNb);
 		bb.putInt(jitter);
