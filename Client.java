@@ -60,7 +60,6 @@ public class Client{
     //Video constants:
     //------------------
     static int MJPEG_TYPE = 26; //RTP payload type for MJPEG video
-    static int META_TYPE = 35;  //RTP payload type for Metadata, used by describe
 
     //Statistics variables:
     //------------------
@@ -312,6 +311,27 @@ public class Client{
         }
     }
 
+    // Get information about the data stream
+    class describeListener implements ActionListener {
+
+        public void actionPerformed(ActionEvent e) {
+            System.out.println("Sending DESCRIBE request");  
+
+            //increase RTSP sequence number
+            RTSPSeqNb++;
+
+            //Send DESCRIBE message to the server
+            send_RTSP_request("DESCRIBE");
+
+            //Wait for the response 
+            if (parse_server_response() != 200) {
+                System.out.println("Invalid Server Response");
+            }
+            else {     
+                System.out.println("Received response for DESCRIBE");
+            }
+        }
+    }
 
     //------------------------------------
     //Handler for timer
@@ -353,21 +373,13 @@ public class Client{
                 statTotalBytes += payload_length;
                 setStats();
 
-                //check if this is a meta data packet containing describe info
-                if (rtp_packet.getpayloadtype() == META_TYPE) {
-                    PrintWriter writer = new PrintWriter(DES_FNAME, "UTF-8");
-                    writer.println(new String(payload));
-                    writer.close();
-                }
-                else {
-                    //get an Image object from the payload bitstream
-                    Toolkit toolkit = Toolkit.getDefaultToolkit();
-                    Image image = toolkit.createImage(payload, 0, payload_length);
+                //get an Image object from the payload bitstream
+                Toolkit toolkit = Toolkit.getDefaultToolkit();
+                Image image = toolkit.createImage(payload, 0, payload_length);
 
-                    //display the image as an ImageIcon object
-                    icon = new ImageIcon(image);
-                    iconLabel.setIcon(icon);
-                }
+                //display the image as an ImageIcon object
+                icon = new ImageIcon(image);
+                iconLabel.setIcon(icon);
             }
             catch (InterruptedIOException iioe) {
                 System.out.println("Nothing to read");
@@ -381,28 +393,6 @@ public class Client{
         }
     }
 
-    // Get information about the data stream
-    class describeListener implements ActionListener {
-
-        public void actionPerformed(ActionEvent e) {
-            System.out.println("Sending describe message");  
-
-            //increase RTSP sequence number
-            RTSPSeqNb++;
-
-            //Send DESCRIBE message to the server
-            send_RTSP_request("DESCRIBE");
-
-            //Wait for the response 
-            if (parse_server_response() != 200) {
-                System.out.println("Invalid Server Response");
-            }
-            else {     
-                System.out.println("Received response for DESCRIBE");
-            }
-        }
-    }
-
     //------------------------------------
     //Parse Server Response
     //------------------------------------
@@ -410,7 +400,7 @@ public class Client{
     {
         int reply_code = 0;
 
-        try{
+        try {
             //parse status line and extract the reply_code:
             String StatusLine = RTSPBufferedReader.readLine();
             System.out.println("RTSP Client - Received from Server:");
@@ -421,19 +411,26 @@ public class Client{
             reply_code = Integer.parseInt(tokens.nextToken());
             
             //if reply code is OK get and print the 2 other lines
-            if (reply_code == 200)
-            {
+            if (reply_code == 200) {
                 String SeqNumLine = RTSPBufferedReader.readLine();
                 System.out.println(SeqNumLine);
                 
                 String SessionLine = RTSPBufferedReader.readLine();
                 System.out.println(SessionLine);
 
+                tokens = new StringTokenizer(SessionLine);
+                String temp = tokens.nextToken();
                 //if state == INIT gets the Session Id from the SessionLine
-                if (state == INIT) {
-                    tokens = new StringTokenizer(SessionLine);
-                    tokens.nextToken(); //skip over the Session:
+                if (temp.compareTo("Session:") == 0 && state == INIT) {
                     RTSPid = Integer.parseInt(tokens.nextToken());
+                }
+                else if (temp.compareTo("Content-Base:") == 0) {
+                    // Get the DESCRIBE lines
+                    String newLine;
+                    for (int i = 0; i < 5; i++) {
+                        newLine = RTSPBufferedReader.readLine();
+                        System.out.println(newLine);
+                    }
                 }
             }
         } catch(Exception ex) {
@@ -478,7 +475,7 @@ public class Client{
                 RTSPBufferedWriter.write("Transport: RTP/UDP; client_port= " + RTP_RCV_PORT + CRLF);
             }
             else if (request_type == "DESCRIBE") {
-                RTSPBufferedWriter.write("Accept: application/sdp, application/rtsl, application/mheg");
+                RTSPBufferedWriter.write("Accept: application/sdp, application/rtsl, application/mheg" + CRLF);
             }
             else {
                 //otherwise, write the Session line from the RTSPid field
