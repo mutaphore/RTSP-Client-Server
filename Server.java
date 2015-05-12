@@ -60,6 +60,12 @@ public class Server extends JFrame implements ActionListener
     static String VideoFileName; //video file requested from the client
     static int RTSP_ID = 123456; //ID of the RTSP session
     int RTSPSeqNb = 0; //Sequence number of RTSP messages within the session
+
+
+    //RTCP variables
+    //----------------
+    DatagramSocket RTCPsocket;
+    static int RTCP_RCV_PORT = 25001; //port where the client will receive the RTP packets
     
     final static String CRLF = "\r\n";
 
@@ -142,8 +148,9 @@ public class Server extends JFrame implements ActionListener
                 //init the VideoStream object:
                 theServer.video = new VideoStream(VideoFileName);
 
-                //init RTP socket
+                //init RTP and RTCP sockets
                 theServer.RTPsocket = new DatagramSocket();
+                theServer.RTCPsocket = new DatagramSocket(RTCP_RCV_PORT);
             }
         }
 

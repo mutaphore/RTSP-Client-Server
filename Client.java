@@ -57,6 +57,12 @@ public class Client{
     final static String CRLF = "\r\n";
     final static String DES_FNAME = "session_info.txt";
 
+    //RTCP variables
+    //----------------
+    DatagramSocket RTCPsocket;
+    static int RTCP_RCV_PORT = 25001; //port where the client will receive the RTP packets
+    Timer controlTimer;
+
     //Video constants:
     //------------------
     static int MJPEG_TYPE = 26; //RTP payload type for MJPEG video
@@ -128,6 +134,11 @@ public class Client{
         timer.setInitialDelay(0);
         timer.setCoalesce(true);
 
+        // Fires 5% of the time
+        controlTimer = new Timer(400, new controlTimerListener());
+        controlTimer.setInitialDelay(0);
+        controlTimer.setCoalesce(true);
+
         //allocate enough memory for the buffer used to receive data from the server
         buf = new byte[15000];    
     }
@@ -153,8 +164,11 @@ public class Client{
         //------------------
         theClient.RTSPsocket = new Socket(ServerIPAddr, RTSP_server_port);
 
+        //Establish a UDP connection with the server to exchange RTCP control packets
+        //------------------
+
         //Set input and output stream filters:
-        RTSPBufferedReader = new BufferedReader(new InputStreamReader(theClient.RTSPsocket.getInputStream()) );
+        RTSPBufferedReader = new BufferedReader(new InputStreamReader(theClient.RTSPsocket.getInputStream()));
         RTSPBufferedWriter = new BufferedWriter(new OutputStreamWriter(theClient.RTSPsocket.getOutputStream()) );
 
         //init RTSP state:
@@ -182,6 +196,8 @@ public class Client{
                 try {
                     //construct a new DatagramSocket to receive RTP packets from the server, on port RTP_RCV_PORT
                     RTPsocket = new DatagramSocket(RTP_RCV_PORT);
+                    //UDP socket for sending QoS RTCP packets
+                    RTCPsocket = new DatagramSocket();
                     //set TimeOut value of the socket to 5msec.
                     RTPsocket.setSoTimeout(5);
                 }
@@ -393,6 +409,28 @@ public class Client{
         }
     }
 
+    // Sends RTCP control packets at designated intervals
+    class controlTimerListener implements ActionListener {
+
+        public void actionPerformed(ActionEvent e) {
+
+            DatagramPacket ctrldp;
+            byte[] 
+            int packet_length;
+
+            try {
+
+                ctrldp = new DatagramPacket(packet_bits, packet_length, ClientIPAddr, RTP_dest_port);
+                RTCPsocket.send(ctrldp);
+
+            } catch (InterruptedIOException iioe) {
+                System.out.println("Nothing to read");
+            } catch (IOException ioe) {
+                System.out.println("Exception caught: "+ioe);
+            }
+        }
+    }
+
     //------------------------------------
     //Parse Server Response
     //------------------------------------
@@ -427,7 +465,7 @@ public class Client{
                 else if (temp.compareTo("Content-Base:") == 0) {
                     // Get the DESCRIBE lines
                     String newLine;
-                    for (int i = 0; i < 5; i++) {
+                    for (int i = 0; i < 6; i++) {
                         newLine = RTSPBufferedReader.readLine();
                         System.out.println(newLine);
                     }
