@@ -61,7 +61,7 @@ public class Client{
     //----------------
     DatagramSocket RTCPsocket;
     static int RTCP_RCV_PORT = 25001; //port where the client will receive the RTP packets
-    Timer controlTimer;
+    Timer rtcpTimer;
 
     //Video constants:
     //------------------
@@ -135,9 +135,9 @@ public class Client{
         timer.setCoalesce(true);
 
         // Fires 5% of the time
-        controlTimer = new Timer(400, new controlTimerListener());
-        controlTimer.setInitialDelay(0);
-        controlTimer.setCoalesce(true);
+        rtcpTimer = new Timer(400, new RTCPListener());
+        rtcpTimer.setInitialDelay(0);
+        rtcpTimer.setCoalesce(true);
 
         //allocate enough memory for the buffer used to receive data from the server
         buf = new byte[15000];    
@@ -410,17 +410,18 @@ public class Client{
     }
 
     // Sends RTCP control packets at designated intervals
-    class controlTimerListener implements ActionListener {
+    class RTCPListener implements ActionListener {
 
         public void actionPerformed(ActionEvent e) {
 
-            RTCPpacket rtcp_packet = new RTCPpacket();
+            RTCPpacket rtcp_packet = new RTCPpacket(0.2, 10, 45);
             int packet_length = rtcp_packet.getlength();
             byte[] packet_bits = byte[packet_length];
+            rtcp_packet.getpacket(packet_bits);
 
             try {
-                DatagramPacket ctrldp = new DatagramPacket(packet_bits, packet_length, ServerIPAddr, RTCP_RCV_PORT);
-                RTCPsocket.send(ctrldp);
+                DatagramPacket dp = new DatagramPacket(packet_bits, packet_length, ServerIPAddr, RTCP_RCV_PORT);
+                RTCPsocket.send(dp);
             } catch (InterruptedIOException iioe) {
                 System.out.println("Nothing to read");
             } catch (IOException ioe) {

@@ -65,9 +65,10 @@ public class Server extends JFrame implements ActionListener
     //RTCP variables
     //----------------
     DatagramSocket RTCPsocket;
-    Timer controlTimer;
+    Timer rtcpTimer;
+    byte[] rtcpBuf;
     static int RTCP_RCV_PORT = 25001; //port where the client will receive the RTP packets
-    static int CTRL_PERIOD = 200;     // How often to check for control events
+    static int CTRL_PERIOD = 100;     //How often to check for control events
     
     final static String CRLF = "\r\n";
 
@@ -84,12 +85,15 @@ public class Server extends JFrame implements ActionListener
         timer.setInitialDelay(0);
         timer.setCoalesce(true);
 
-        controlTimer = new Timer(CTRL_PERIOD, new ControlListener());
-        controlTimer.setInitialDelay(0);
-        controlTimer.setCoalesce(true);
+        rtcpTimer = new Timer(CTRL_PERIOD, new RTCPListener());
+        rtcpTimer.setInitialDelay(0);
+        rtcpTimer.setCoalesce(true);
 
         //allocate memory for the sending buffer
         buf = new byte[15000]; 
+
+        //allocate buffer for receiving RTCP packets
+        rtcpBuf = new byte[100];
 
         //Handler to close the main window
         addWindowListener(new WindowAdapter() {
@@ -102,13 +106,6 @@ public class Server extends JFrame implements ActionListener
         //GUI:
         label = new JLabel("Send frame #        ", JLabel.CENTER);
         getContentPane().add(label, BorderLayout.CENTER);
-    }
-
-    public class ControlListener extends ActionListener {
-
-        public void actionPerformed(ActionEvent e) {
-            //TODO: grab the packet and make decisions
-        }
     }
           
     //------------------------------------
@@ -251,6 +248,28 @@ public class Server extends JFrame implements ActionListener
         else {
             //if we have reached the end of the video file, stop the timer
             timer.stop();
+        }
+    }
+
+    // A listener for RTCP packets sent from client
+    private class RTCPListener extends ActionListener {
+
+        public void actionPerformed(ActionEvent e) {
+            //Construct a DatagramPacket to receive data from the UDP socket
+            DatagramPacket dp = new DatagramPacket(rtcpBuf, rtcpBuf.length);
+
+            try {
+                RTCPsocket.receive(dp);   // Blocking
+                RTCPpacket packet = new RTCPpacket(dp.getData(), dp.getLength());
+                System.out.println("Received RTCP packet");
+                System.out.println(packet);
+            }
+            catch (InterruptedIOException iioe) {
+                System.out.println("Nothing to read");
+            }
+            catch (IOException ioe) {
+                System.out.println("Exception caught: "+ioe);
+            }
         }
     }
 

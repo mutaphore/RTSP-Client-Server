@@ -122,4 +122,8 @@ class RTCPpacket {
         return (BODY_SIZE + HEADER_SIZE);
     }
 
+    public String toString() {
+    	return "Version: " + Version + " Fraction Lost: " + fractionLost 
+    		   + " Cumulative Lost: " + cumLost + " Highest Seq Num: " + highSeqNb;
+    }
 }
