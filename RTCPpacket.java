@@ -123,7 +123,7 @@ class RTCPpacket {
     }
 
     public String toString() {
-    	return "Version: " + Version + " Fraction Lost: " + fractionLost 
-    		   + " Cumulative Lost: " + cumLost + " Highest Seq Num: " + highSeqNb;
+    	return "[RTCP] Version: " + Version + ", Fraction Lost: " + fractionLost 
+    		   + ", Cumulative Lost: " + cumLost + ", Highest Seq Num: " + highSeqNb;
     }
 }

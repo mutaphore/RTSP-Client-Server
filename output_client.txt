@@ -1,0 +1,2 @@
+Setup Button pressed !
+Exception caught: java.lang.NullPointerException

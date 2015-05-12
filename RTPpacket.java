@@ -178,7 +178,7 @@ public class RTPpacket{
     //--------------------------
     public void printheader()
     {
-        System.out.print("[Header] ");
+        System.out.print("[RTP-Header] ");
         System.out.println("Version: " + Version 
                            + ", Padding: " + Padding
                            + ", Extension: " + Extension 

@@ -65,10 +65,10 @@ public class Server extends JFrame implements ActionListener
     //RTCP variables
     //----------------
     DatagramSocket RTCPsocket;
-    Timer rtcpTimer;
+    RtcpReceiver rtcpReceiver;
     byte[] rtcpBuf;
-    static int RTCP_RCV_PORT = 25001; //port where the client will receive the RTP packets
-    static int CTRL_PERIOD = 100;     //How often to check for control events
+    static int RTCP_RCV_PORT = 19001; //port where the client will receive the RTP packets
+    static int RTCP_PERIOD = 400;     //How often to check for control events
     
     final static String CRLF = "\r\n";
 
@@ -85,9 +85,6 @@ public class Server extends JFrame implements ActionListener
         timer.setInitialDelay(0);
         timer.setCoalesce(true);
 
-        rtcpTimer = new Timer(CTRL_PERIOD, new RTCPListener());
-        rtcpTimer.setInitialDelay(0);
-        rtcpTimer.setCoalesce(true);
 
         //allocate memory for the sending buffer
         buf = new byte[15000]; 
@@ -100,8 +97,12 @@ public class Server extends JFrame implements ActionListener
         public void windowClosing(WindowEvent e) {
           //stop the timer and exit
             timer.stop();
+            rtcpReceiver.stopRcv();
             System.exit(0);
         }});
+
+        //init the RTCP packet receiver
+        rtcpReceiver = new RtcpReceiver(RTCP_PERIOD);
 
         //GUI:
         label = new JLabel("Send frame #        ", JLabel.CENTER);
@@ -174,6 +175,7 @@ public class Server extends JFrame implements ActionListener
                 theServer.send_RTSP_response();
                 //start timer
                 theServer.timer.start();
+                theServer.rtcpReceiver.startRcv();
                 //update state
                 state = PLAYING;
                 System.out.println("New RTSP state: PLAYING");
@@ -183,6 +185,7 @@ public class Server extends JFrame implements ActionListener
                 theServer.send_RTSP_response();
                 //stop timer
                 theServer.timer.stop();
+                theServer.rtcpReceiver.stopRcv();
                 //update state
                 state = READY;
                 System.out.println("New RTSP state: READY");
@@ -192,6 +195,7 @@ public class Server extends JFrame implements ActionListener
                 theServer.send_RTSP_response();
                 //stop timer
                 theServer.timer.stop();
+                theServer.rtcpReceiver.stopRcv();
                 //close sockets
                 theServer.RTSPsocket.close();
                 theServer.RTPsocket.close();
@@ -248,11 +252,21 @@ public class Server extends JFrame implements ActionListener
         else {
             //if we have reached the end of the video file, stop the timer
             timer.stop();
+            rtcpReceiver.stopRcv();
         }
     }
 
     // A listener for RTCP packets sent from client
-    public class RTCPListener implements ActionListener {
+    public class RtcpReceiver implements ActionListener {
+        private Timer rtcpTimer;
+        int interval;
+
+        public RtcpReceiver(int interval) {
+            this.interval = interval;
+            rtcpTimer = new Timer(interval, this);
+            rtcpTimer.setInitialDelay(0);
+            rtcpTimer.setCoalesce(true);
+        }
 
         public void actionPerformed(ActionEvent e) {
             //Construct a DatagramPacket to receive data from the UDP socket
@@ -270,6 +284,14 @@ public class Server extends JFrame implements ActionListener
             catch (IOException ioe) {
                 System.out.println("Exception caught: "+ioe);
             }
+        }
+
+        public void startRcv() {
+            rtcpTimer.start();
+        }
+
+        public void stopRcv() {
+            rtcpTimer.stop();
         }
     }
 

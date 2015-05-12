@@ -61,8 +61,9 @@ public class Client{
     //RTCP variables
     //----------------
     DatagramSocket RTCPsocket;
-    static int RTCP_RCV_PORT = 25001; //port where the client will receive the RTP packets
-    Timer rtcpTimer;
+    static int RTCP_RCV_PORT = 19001; //port where the client will receive the RTP packets
+    static int RTCP_PERIOD = 400;     //How often to send RTCP packets
+    RtcpSender rtcpSender;
 
     //Video constants:
     //------------------
@@ -73,8 +74,10 @@ public class Client{
     int statTotalBytes;         //Total number of bytes received in a session
     double statStartTime;       //Time in milliseconds when start is pressed
     double statTotalPlayTime;   //Time in milliseconds of video playing since beginning
-    int statPktLost;            //Number of packets lost
-    int statRTPNb;              //Sequence number of expected RTP messages within the session
+    float statFractionLost;     //Fraction of RTP data packets from sender lost since the prev packet was sent
+    int statCumLost;            //Number of packets lost
+    int statExpRtpNb;           //Expected Sequence number of RTP messages within the session
+    int statHighSeqNb;          //Highest sequence number received in session
    
     //--------------------------
     //Constructor
@@ -135,10 +138,8 @@ public class Client{
         timer.setInitialDelay(0);
         timer.setCoalesce(true);
 
-        // Fires 5% of the time
-        rtcpTimer = new Timer(400, new RTCPListener());
-        rtcpTimer.setInitialDelay(0);
-        rtcpTimer.setCoalesce(true);
+        //init RTCP packet sender
+        rtcpSender = new RtcpSender(400);
 
         //allocate enough memory for the buffer used to receive data from the server
         buf = new byte[15000];    
@@ -170,7 +171,7 @@ public class Client{
 
         //Set input and output stream filters:
         RTSPBufferedReader = new BufferedReader(new InputStreamReader(theClient.RTSPsocket.getInputStream()));
-        RTSPBufferedWriter = new BufferedWriter(new OutputStreamWriter(theClient.RTSPsocket.getOutputStream()) );
+        RTSPBufferedWriter = new BufferedWriter(new OutputStreamWriter(theClient.RTSPsocket.getOutputStream()));
 
         //init RTSP state:
         state = INIT;
@@ -257,6 +258,7 @@ public class Client{
 
                     //start the timer
                     timer.start();
+                    rtcpSender.startSend();
                 }
             }
             //else if state != READY then do nothing
@@ -291,6 +293,7 @@ public class Client{
                       
                     //stop the timer
                     timer.stop();
+                    rtcpSender.stopSend();
                 }
             }
             //else if state != PLAYING then do nothing
@@ -321,6 +324,7 @@ public class Client{
 
                 //stop the timer
                 timer.stop();
+                rtcpSender.stopSend();
 
                 //exit
                 System.exit(0);
@@ -366,13 +370,19 @@ public class Client{
                 RTPsocket.receive(rcvdp);
                 statTotalPlayTime += System.currentTimeMillis() - statStartTime; 
                 //keep track of sequence number for dropped packets stats
-                statRTPNb++;
+                statExpRtpNb++;
 
                 //create an RTPpacket object from the DP
                 RTPpacket rtp_packet = new RTPpacket(rcvdp.getData(), rcvdp.getLength());
+                int seqNb = rtp_packet.getsequencenumber();
+
+                //this is the highest seq num received
+                if (seqNb > statHighSeqNb) {
+                    statHighSeqNb = seqNb;
+                }
 
                 //print important header fields of the RTP packet received: 
-                System.out.println("Got RTP packet with SeqNum # " + rtp_packet.getsequencenumber()
+                System.out.println("Got RTP packet with SeqNum # " + seqNb
                                    + " TimeStamp " + rtp_packet.gettimestamp() + " ms, of type "
                                    + rtp_packet.getpayloadtype());
 
@@ -385,8 +395,9 @@ public class Client{
                 rtp_packet.getpayload(payload);
 
                 //compute stats
-                if (statRTPNb != rtp_packet.getsequencenumber())
-                    statPktLost++;
+                if (statExpRtpNb != seqNb) {
+                    statCumLost++;
+                }
                 statTotalBytes += payload_length;
                 setStats();
 
@@ -410,12 +421,40 @@ public class Client{
         }
     }
 
-    // Sends RTCP control packets at designated intervals
-    class RTCPListener implements ActionListener {
+    // A class that sends RTCP control packets at designated intervals
+    class RtcpSender implements ActionListener {
+
+        private Timer rtcpTimer;
+        int interval;
+
+        // Stats variables
+        private int numPktsExpected;    // Number of RTP packets expected since the last RTCP packet
+        private int numPktsLost;        // Number of RTP packets lost since the last RTCP packet
+        private int lastHighSeqNb;      // The last highest Seq number received
+        private int lastCumLost;        // The last cumulative packets lost
+        private float lastFractionLost; // The last fraction lost
+
+        public RtcpSender(int interval) {
+            this.interval = interval;
+            rtcpTimer = new Timer(interval, this);
+            rtcpTimer.setInitialDelay(0);
+            rtcpTimer.setCoalesce(true);
+        }
+
+        public void run() {
+            System.out.println("RtcpSender Thread Running");
+        }
 
         public void actionPerformed(ActionEvent e) {
 
-            RTCPpacket rtcp_packet = new RTCPpacket(0.2f, 10, 45);
+            // Calculate the stats for this period
+            numPktsExpected = statHighSeqNb - lastHighSeqNb;
+            numPktsLost = statCumLost - lastCumLost;
+            lastFractionLost = numPktsExpected == 0 ? 0f : (float)numPktsLost / numPktsExpected;
+            lastHighSeqNb = statHighSeqNb;
+            lastCumLost = statCumLost;
+
+            RTCPpacket rtcp_packet = new RTCPpacket(lastFractionLost, statCumLost, statHighSeqNb);
             int packet_length = rtcp_packet.getlength();
             byte[] packet_bits = new byte[packet_length];
             rtcp_packet.getpacket(packet_bits);
@@ -428,6 +467,16 @@ public class Client{
             } catch (IOException ioe) {
                 System.out.println("Exception caught: "+ioe);
             }
+        }
+
+        // Start sending RTCP packets
+        public void startSend() {
+            rtcpTimer.start();
+        }
+
+        // Stop sending RTCP packets
+        public void stopSend() {
+            rtcpTimer.stop();
         }
     }
 
@@ -483,7 +532,7 @@ public class Client{
         double dataRate = statTotalPlayTime == 0 ? 0 : (statTotalBytes / (statTotalPlayTime / 1000.0));
         DecimalFormat formatter = new DecimalFormat("###,###.#");
         statLabel1.setText("Total Bytes Received: " + statTotalBytes);
-        statLabel2.setText("Packets Lost: " + statPktLost);
+        statLabel2.setText("Packets Lost: " + statCumLost);
         statLabel3.setText("Data Rate: " + formatter.format(dataRate) + " bytes/s");
     }
 
