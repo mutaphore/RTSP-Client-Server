@@ -108,7 +108,7 @@ public class Client{
         playButton.addActionListener(new playButtonListener());
         pauseButton.addActionListener(new pauseButtonListener());
         tearButton.addActionListener(new tearButtonListener());
-        describeButton.addActionListener(new describeListener());
+        describeButton.addActionListener(new describeButtonListener());
 
         //Statistics
         statLabel1.setText("Total Bytes Received: 0");
@@ -338,7 +338,7 @@ public class Client{
     }
 
     // Get information about the data stream
-    class describeListener implements ActionListener {
+    class describeButtonListener implements ActionListener {
 
         public void actionPerformed(ActionEvent e) {
             System.out.println("Sending DESCRIBE request");  
@@ -409,11 +409,9 @@ public class Client{
                 //get an Image object from the payload bitstream
                 Toolkit toolkit = Toolkit.getDefaultToolkit();
                 fsynch.addFrame(toolkit.createImage(payload, 0, payload_length), seqNb);
-                Image image = fsynch.nextFrame();
-                // Image image = toolkit.createImage(payload, 0, payload_length);
 
                 //display the image as an ImageIcon object
-                icon = new ImageIcon(image);
+                icon = new ImageIcon(fsynch.nextFrame());
                 iconLabel.setIcon(icon);
             }
             catch (InterruptedIOException iioe) {
@@ -496,19 +494,18 @@ public class Client{
 
         private ArrayDeque<Image> iq;
         private int bufSize;
-        private int highSeqNb;
         private int curSeqNb;
         private Image lastImage;
 
         public FrameSynchronizer(int bsize) {
+            curSeqNb = 1;
             bufSize = bsize;
             iq = new ArrayDeque<Image>(bufSize);
-            curSeqNb = 1;
         }
 
+        //synchronize frames based on their sequence number
         public void addFrame(Image image, int seqNum) {
             if (seqNum < curSeqNb) {
-                // Image copy = new Image(image, SWT.IMAGE_COPY);
                 iq.add(lastImage);
             }
             else if (seqNum > curSeqNb) {
@@ -522,6 +519,7 @@ public class Client{
             }
         }
 
+        //get the next synchronized frame
         public Image nextFrame() {
             curSeqNb++;
             lastImage = iq.peekLast();

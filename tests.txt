@@ -1,0 +1,12 @@
+Testing Methods
+---------------
+
+- While running client, click on different combinations of buttons: SETUP, PLAY, PAUSE,
+  STOP and SESSION. Test for the correctness of standard output to see if they are the
+  expected values.
+- Run Client on FunkyServer to see if it is able synchronize dropped frames properly.
+- Modify the Server code to purposely generate out of sync frames and see if the client 
+  can synchronize and show appropriate frames.
+- Test for correct packets drop rate statistics. By knowing a fixed amount of dropped
+  packets in periodic intervals, see if the client side is showing the correct stats.
+

@@ -347,8 +347,8 @@ public class Server extends JFrame implements ActionListener
                 RTP_dest_port = Integer.parseInt(tokens.nextToken());
             }
             else if (request_type == DESCRIBE) {
-                // tokens.nextToken();
-                // String describeDataType = tokens.nextToken();
+                tokens.nextToken();
+                String describeDataType = tokens.nextToken();
             }
             else {
                 //otherwise LastLine will be the SessionId line
@@ -364,7 +364,7 @@ public class Server extends JFrame implements ActionListener
     }
 
     // Creates a DESCRIBE response string in SDP format for current media
-    private String createDescribeSDP() {
+    private String describe() {
         StringWriter writer1 = new StringWriter();
         StringWriter writer2 = new StringWriter();
         
@@ -400,7 +400,7 @@ public class Server extends JFrame implements ActionListener
     }
 
     private void send_RTSP_describe() {
-        String des = createDescribeSDP();
+        String des = describe();
         try {
             RTSPBufferedWriter.write("RTSP/1.0 200 OK"+CRLF);
             RTSPBufferedWriter.write("CSeq: "+RTSPSeqNb+CRLF);

@@ -1,0 +1,12 @@
+Vulnerabilities
+---------------
+
+- When client requests for session information (DESCRIBE) before the session
+  has been setup, the client program will freeze waiting for a response from
+  the server. This is because the RTSP connection has not been setup yet and 
+  there is no way for the client to know when it will be received.
+
+- The client expects to receive a response from all RTSP requests to the server.
+  In other words, if the server does not provide a RTSP method that it requests,
+  it will wait infinitely for a RSTP OK response to come back. A way to fix this
+  is to implement a timeout functionality so it doesn't block forever.
