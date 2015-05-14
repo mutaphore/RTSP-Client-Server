@@ -64,11 +64,10 @@ public class Server extends JFrame implements ActionListener
 
     //RTCP variables
     //----------------
-    DatagramSocket RTCPsocket;
-    RtcpReceiver rtcpReceiver;
-    byte[] rtcpBuf;
     static int RTCP_RCV_PORT = 19001; //port where the client will receive the RTP packets
     static int RTCP_PERIOD = 400;     //How often to check for control events
+    DatagramSocket RTCPsocket;
+    RtcpReceiver rtcpReceiver;
     
     final static String CRLF = "\r\n";
 
@@ -89,8 +88,6 @@ public class Server extends JFrame implements ActionListener
         //allocate memory for the sending buffer
         buf = new byte[15000]; 
 
-        //allocate buffer for receiving RTCP packets
-        rtcpBuf = new byte[100];
 
         //Handler to close the main window
         addWindowListener(new WindowAdapter() {
@@ -259,13 +256,18 @@ public class Server extends JFrame implements ActionListener
     // A listener for RTCP packets sent from client
     public class RtcpReceiver implements ActionListener {
         private Timer rtcpTimer;
+        private byte[] rtcpBuf;
         int interval;
 
         public RtcpReceiver(int interval) {
+            //set timer with interval for receiving packets
             this.interval = interval;
             rtcpTimer = new Timer(interval, this);
             rtcpTimer.setInitialDelay(0);
             rtcpTimer.setCoalesce(true);
+
+            //allocate buffer for receiving RTCP packets
+            rtcpBuf = new byte[512];
         }
 
         public void actionPerformed(ActionEvent e) {
@@ -275,8 +277,7 @@ public class Server extends JFrame implements ActionListener
             try {
                 RTCPsocket.receive(dp);   // Blocking
                 RTCPpacket packet = new RTCPpacket(dp.getData(), dp.getLength());
-                System.out.println("Received RTCP packet");
-                System.out.println(packet);
+                System.out.println("[RTCP] " + packet);
             }
             catch (InterruptedIOException iioe) {
                 System.out.println("Nothing to read");

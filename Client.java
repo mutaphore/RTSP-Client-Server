@@ -60,9 +60,9 @@ public class Client{
 
     //RTCP variables
     //----------------
-    DatagramSocket RTCPsocket;
-    static int RTCP_RCV_PORT = 19001; //port where the client will receive the RTP packets
-    static int RTCP_PERIOD = 400;     //How often to send RTCP packets
+    DatagramSocket RTCPsocket;          //UDP socket for sending RTCP packets
+    static int RTCP_RCV_PORT = 19001;   //port where the client will receive the RTP packets
+    static int RTCP_PERIOD = 400;       //How often to send RTCP packets
     RtcpSender rtcpSender;
 
     //Video constants:
@@ -71,6 +71,7 @@ public class Client{
 
     //Statistics variables:
     //------------------
+    double statDataRate;        //Rate of video data received in bytes/s
     int statTotalBytes;         //Total number of bytes received in a session
     double statStartTime;       //Time in milliseconds when start is pressed
     double statTotalPlayTime;   //Time in milliseconds of video playing since beginning
@@ -369,17 +370,12 @@ public class Client{
                 //receive the DP from the socket, save time for stats
                 RTPsocket.receive(rcvdp);
                 statTotalPlayTime += System.currentTimeMillis() - statStartTime; 
-                //keep track of sequence number for dropped packets stats
-                statExpRtpNb++;
 
                 //create an RTPpacket object from the DP
                 RTPpacket rtp_packet = new RTPpacket(rcvdp.getData(), rcvdp.getLength());
                 int seqNb = rtp_packet.getsequencenumber();
 
                 //this is the highest seq num received
-                if (seqNb > statHighSeqNb) {
-                    statHighSeqNb = seqNb;
-                }
 
                 //print important header fields of the RTP packet received: 
                 System.out.println("Got RTP packet with SeqNum # " + seqNb
@@ -394,12 +390,18 @@ public class Client{
                 byte [] payload = new byte[payload_length];
                 rtp_packet.getpayload(payload);
 
-                //compute stats
+                //compute stats and update the label in GUI
+                statExpRtpNb++;
+                f (seqNb > statHighSeqNb) {
+                    statHighSeqNb = seqNb;
+                }
                 if (statExpRtpNb != seqNb) {
                     statCumLost++;
                 }
+                statDataRate = statTotalPlayTime == 0 ? 0 : (statTotalBytes / (statTotalPlayTime / 1000.0));
+                statFractionLost = (float)statCumLost / statHighSeqNb;
                 statTotalBytes += payload_length;
-                setStats();
+                updateStatsLabel();
 
                 //get an Image object from the payload bitstream
                 Toolkit toolkit = Toolkit.getDefaultToolkit();
@@ -421,7 +423,9 @@ public class Client{
         }
     }
 
-    // A class that sends RTCP control packets at designated intervals
+    //------------------------------------
+    // Send RTCP control packets for QoS feedback
+    //------------------------------------
     class RtcpSender implements ActionListener {
 
         private Timer rtcpTimer;
@@ -528,22 +532,17 @@ public class Client{
         return(reply_code);
     }
 
-    private void setStats() {
-        double dataRate = statTotalPlayTime == 0 ? 0 : (statTotalBytes / (statTotalPlayTime / 1000.0));
-        DecimalFormat formatter = new DecimalFormat("###,###.#");
+    private void updateStatsLabel() {
+        DecimalFormat formatter = new DecimalFormat("###,###.##");
         statLabel1.setText("Total Bytes Received: " + statTotalBytes);
-        statLabel2.setText("Packets Lost: " + statCumLost);
-        statLabel3.setText("Data Rate: " + formatter.format(dataRate) + " bytes/s");
+        statLabel2.setText("Packet Lost Rate: " + formatter.format(statFractionLost));
+        statLabel3.setText("Data Rate: " + formatter.format(statDataRate) + " bytes/s");
     }
 
     //------------------------------------
     //Send RTSP Request
     //------------------------------------
 
-    //.............
-    //TO COMPLETE
-    //.............
-    
     private void send_RTSP_request(String request_type)
     {
         try {
