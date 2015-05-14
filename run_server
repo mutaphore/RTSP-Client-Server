@@ -1,0 +1,4 @@
+PORT=1051
+
+echo "Running Server on port $PORT"
+java Server $PORT

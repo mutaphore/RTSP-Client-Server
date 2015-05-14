@@ -1,0 +1,7 @@
+PORT=1051
+HOST=localhost
+FILE=movie.Mjpeg
+
+echo "Connecting with server on $HOST port $PORT"
+echo "Streaming $FILE"
+java Client $HOST $PORT $FILE

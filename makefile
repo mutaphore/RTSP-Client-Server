@@ -1,16 +1,17 @@
-JFLAGS = -cp .:./Fsm/
 JC = javac
 J = java
 
-all: TCPState.class TCPEvent.class TCPAction.class Main.class
-	$(J) $(JFLAGS) Main
-Main.class: Main.java TCPEvent.java TCPState.java TCPAction.java
-	$(JC) $(JFLAGS) Main.java TCPEvent.java TCPState.java TCPAction.java
-TCPState.class: TCPState.java
-	$(JC) $(JFLAGS) TCPState.java
-TCPEvent.class: TCPEvent.java TCPAction.java
-	$(JC) $(JFLAGS) TCPEvent.java TCPAction.java
-TCPAction.class: TCPAction.java
-	$(JC) $(JFLAGS) TCPAction.java
+default: Client.class Server.class VideoStream.class RTPpacket.class RTCPpacket.class
+
+Client.class: Client.java
+	$(JC) $(JFLAGS) Client.java
+Server.class: Server.java
+	$(JC) $(JFLAGS) Server.java 
+VideoStream.class: VideoStream.java
+	$(JC) $(JFLAGS) VideoStream.java 
+RTPpacket.class: RTPpacket.java
+	$(JC) $(JFLAGS) RTPpacket.java 
+RTCPpacket.class: RTCPpacket.java
+	$(JC) $(JFLAGS) RTCPpacket.java 
 clean:
 	rm -f *.class

@@ -15,7 +15,6 @@ import java.awt.image.*;
 import javax.imageio.*;
 import javax.imageio.stream.ImageOutputStream;
 
-
 public class Server extends JFrame implements ActionListener 
 {
 
@@ -24,8 +23,8 @@ public class Server extends JFrame implements ActionListener
     DatagramSocket RTPsocket; //socket to be used to send and receive UDP packets
     DatagramPacket senddp; //UDP packet containing the video frames
 
-    InetAddress ClientIPAddr; //Client IP address
-    int RTP_dest_port = 0; // destination port for RTP packets  (given by the RTSP Client)
+    InetAddress ClientIPAddr;   //Client IP address
+    int RTP_dest_port = 0;      //destination port for RTP packets  (given by the RTSP Client)
     int RTSP_dest_port = 0;
 
     //GUI:
@@ -77,7 +76,9 @@ public class Server extends JFrame implements ActionListener
     RtcpReceiver rtcpReceiver;
     int congestionLevel;
 
+    //Performance optimization and Congestion control
     ImageTranslator imgTranslator;
+    CongestionController cc;
     
     final static String CRLF = "\r\n";
 
@@ -89,11 +90,14 @@ public class Server extends JFrame implements ActionListener
         //init Frame
         super("Server");
 
-        //init Timer
+        //init RTP sending Timer
         sendDelay = FRAME_PERIOD;
         timer = new Timer(sendDelay, this);
         timer.setInitialDelay(0);
         timer.setCoalesce(true);
+
+        //init congestion controller
+        cc = new CongestionController(100);
 
         //allocate memory for the sending buffer
         buf = new byte[20000]; 
@@ -271,6 +275,29 @@ public class Server extends JFrame implements ActionListener
             //if we have reached the end of the video file, stop the timer
             timer.stop();
             rtcpReceiver.stopRcv();
+        }
+    }
+
+    //------------------------
+    //Controls RTP sending rate based on traffic
+    //------------------------
+    class CongestionController implements ActionListener{
+        private Timer ccTimer;
+        int interval;   //interval to check traffic stats
+        int prevLevel;  //previously sampled congestion level
+
+        public CongestionController(int interval) {
+            this.interval = interval;
+            ccTimer = new Timer(interval, this);
+        }
+
+        public void actionPerformed(ActionEvent e) {
+
+            if (prevLevel != congestionLevel) {
+                sendDelay = FRAME_PERIOD + congestionLevel * 10;
+                timer.setDelay(sendDelay);
+                prevLevel = congestionLevel;
+            }
         }
     }
 
