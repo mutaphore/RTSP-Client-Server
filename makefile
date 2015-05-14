@@ -15,3 +15,4 @@ RTCPpacket.class: RTCPpacket.java
 	$(JC) $(JFLAGS) RTCPpacket.java 
 clean:
 	rm -f *.class
+	find . -type f -not -name '*.java' -not -name 'FunkyServer.class' -not -name 'FunkyServer\$1.class' | xargs rm

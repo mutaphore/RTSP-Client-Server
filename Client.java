@@ -441,7 +441,7 @@ public class Client{
         private int lastCumLost;        // The last cumulative packets lost
         private float lastFractionLost; // The last fraction lost
 
-        Random randomGenerator;
+        Random randomGenerator;         // For testing only
 
         public RtcpSender(int interval) {
             this.interval = interval;
@@ -464,7 +464,8 @@ public class Client{
             lastHighSeqNb = statHighSeqNb;
             lastCumLost = statCumLost;
 
-            lastFractionLost = randomGenerator.nextInt(10)/10.0f;
+            //To test lost feedback on lost packets
+            // lastFractionLost = randomGenerator.nextInt(10)/10.0f;
 
             RTCPpacket rtcp_packet = new RTCPpacket(lastFractionLost, statCumLost, statHighSeqNb);
             int packet_length = rtcp_packet.getlength();

@@ -97,7 +97,7 @@ public class Server extends JFrame implements ActionListener
         timer.setCoalesce(true);
 
         //init congestion controller
-        cc = new CongestionController(100);
+        cc = new CongestionController(600);
 
         //allocate memory for the sending buffer
         buf = new byte[20000]; 
@@ -289,14 +289,17 @@ public class Server extends JFrame implements ActionListener
         public CongestionController(int interval) {
             this.interval = interval;
             ccTimer = new Timer(interval, this);
+            ccTimer.start();
         }
 
         public void actionPerformed(ActionEvent e) {
 
+            //adjust the send rate
             if (prevLevel != congestionLevel) {
-                sendDelay = FRAME_PERIOD + congestionLevel * 10;
+                sendDelay = FRAME_PERIOD + congestionLevel * (int)(FRAME_PERIOD * 0.1);
                 timer.setDelay(sendDelay);
                 prevLevel = congestionLevel;
+                System.out.println("Send delay changed to: " + sendDelay);
             }
         }
     }
