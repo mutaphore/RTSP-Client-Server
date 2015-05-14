@@ -75,6 +75,7 @@ public class Server extends JFrame implements ActionListener
     static int RTCP_PERIOD = 400;     //How often to check for control events
     DatagramSocket RTCPsocket;
     RtcpReceiver rtcpReceiver;
+    int congestionLevel;
 
     ImageTranslator imgTranslator;
     
@@ -221,6 +222,7 @@ public class Server extends JFrame implements ActionListener
     //Handler for timer
     //------------------------
     public void actionPerformed(ActionEvent e) {
+        byte[] frame;
 
         //if the current image nb is less than the length of the video
         if (imagenb < VIDEO_LENGTH) {
@@ -231,10 +233,13 @@ public class Server extends JFrame implements ActionListener
                 //get next frame to send from the video, as well as its size
                 int image_length = video.getnextframe(buf);
 
-                //adjust quality of the image
-                byte[] temp = imgTranslator.compress(Arrays.copyOfRange(buf, 0, image_length));
-                System.out.println("Frame size: " + temp.length + " " + buf.length);
-                System.arraycopy(temp, 0, buf, 0, temp.length);
+                //adjust quality of the image if there is congestion detected
+                if (congestionLevel > 0) {
+                    imgTranslator.setCompressionQuality(1.0f - congestionLevel * 0.2f);
+                    frame = imgTranslator.compress(Arrays.copyOfRange(buf, 0, image_length));
+                    image_length = frame.length;
+                    System.arraycopy(frame, 0, buf, 0, image_length);
+                }
 
                 //Builds an RTPpacket object containing the frame
                 RTPpacket rtp_packet = new RTPpacket(MJPEG_TYPE, imagenb, imagenb*FRAME_PERIOD, buf, image_length);
@@ -250,7 +255,7 @@ public class Server extends JFrame implements ActionListener
                 senddp = new DatagramPacket(packet_bits, packet_length, ClientIPAddr, RTP_dest_port);
                 RTPsocket.send(senddp);
 
-                System.out.println("Send frame #"+imagenb);
+                System.out.println("Send frame #" + imagenb + ", Frame size: " + image_length + " (" + buf.length + ")");
                 //print the header bitstream
                 rtp_packet.printheader();
 
@@ -291,11 +296,30 @@ public class Server extends JFrame implements ActionListener
         public void actionPerformed(ActionEvent e) {
             //Construct a DatagramPacket to receive data from the UDP socket
             DatagramPacket dp = new DatagramPacket(rtcpBuf, rtcpBuf.length);
+            float fractionLost;
 
             try {
                 RTCPsocket.receive(dp);   // Blocking
-                RTCPpacket packet = new RTCPpacket(dp.getData(), dp.getLength());
-                System.out.println("[RTCP] " + packet);
+                RTCPpacket rtcpPkt = new RTCPpacket(dp.getData(), dp.getLength());
+                System.out.println("[RTCP] " + rtcpPkt);
+
+                //set congestion level between 0 to 4
+                fractionLost = rtcpPkt.fractionLost;
+                if (fractionLost >= 0 && fractionLost <= 0.01) {
+                    congestionLevel = 0;    //less than 0.01 assume negligible
+                }
+                else if (fractionLost > 0.01 && fractionLost <= 0.25) {
+                    congestionLevel = 1;
+                }
+                else if (fractionLost > 0.25 && fractionLost <= 0.5) {
+                    congestionLevel = 2;
+                }
+                else if (fractionLost > 0.5 && fractionLost <= 0.75) {
+                    congestionLevel = 3;
+                }
+                else {
+                    congestionLevel = 4;
+                }
             }
             catch (InterruptedIOException iioe) {
                 System.out.println("Nothing to read");

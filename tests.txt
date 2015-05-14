@@ -4,6 +4,9 @@ Testing Methods
 - While running client, click on different combinations of buttons: SETUP, PLAY, PAUSE,
   STOP and SESSION. Test for the correctness of standard output to see if they are the
   expected values.
+- Simulate fluctuating connection stability by sending random fraction lost values back
+  to the server via RTCP packets. The server should adjust the video quality sent back
+  according the the congestion conditions.
 - Run Client on FunkyServer to see if it is able synchronize dropped frames properly.
 - Modify the Server code to purposely generate out of sync frames and see if the client 
   can synchronize and show appropriate frames.

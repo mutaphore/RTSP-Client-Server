@@ -441,11 +441,14 @@ public class Client{
         private int lastCumLost;        // The last cumulative packets lost
         private float lastFractionLost; // The last fraction lost
 
+        Random randomGenerator;
+
         public RtcpSender(int interval) {
             this.interval = interval;
             rtcpTimer = new Timer(interval, this);
             rtcpTimer.setInitialDelay(0);
             rtcpTimer.setCoalesce(true);
+            randomGenerator = new Random();
         }
 
         public void run() {
@@ -460,6 +463,8 @@ public class Client{
             lastFractionLost = numPktsExpected == 0 ? 0f : (float)numPktsLost / numPktsExpected;
             lastHighSeqNb = statHighSeqNb;
             lastCumLost = statCumLost;
+
+            lastFractionLost = randomGenerator.nextInt(10)/10.0f;
 
             RTCPpacket rtcp_packet = new RTCPpacket(lastFractionLost, statCumLost, statHighSeqNb);
             int packet_length = rtcp_packet.getlength();
