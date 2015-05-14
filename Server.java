@@ -11,6 +11,10 @@ import java.util.*;
 import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.Timer;
+import java.awt.image.*;
+import javax.imageio.*;
+import javax.imageio.stream.ImageOutputStream;
+
 
 public class Server extends JFrame implements ActionListener 
 {
@@ -36,8 +40,11 @@ public class Server extends JFrame implements ActionListener
     static int FRAME_PERIOD = 100; //Frame period of the video to stream, in ms
     static int VIDEO_LENGTH = 500; //length of the video in frames
 
-    Timer timer; //timer used to send the images at the video frame rate
-    byte[] buf; //buffer used to store the images to send to the client 
+    Timer timer;    //timer used to send the images at the video frame rate
+    byte[] buf;     //buffer used to store the images to send to the client 
+    int sendDelay;  //the delay to send images over the wire. Ideally should be
+                    //equal to the frame rate of the video file, but may be 
+                    //adjusted when congestion is detected.
 
     //RTSP variables
     //----------------
@@ -68,6 +75,8 @@ public class Server extends JFrame implements ActionListener
     static int RTCP_PERIOD = 400;     //How often to check for control events
     DatagramSocket RTCPsocket;
     RtcpReceiver rtcpReceiver;
+
+    ImageTranslator imgTranslator;
     
     final static String CRLF = "\r\n";
 
@@ -80,14 +89,13 @@ public class Server extends JFrame implements ActionListener
         super("Server");
 
         //init Timer
-        timer = new Timer(FRAME_PERIOD, this);
+        sendDelay = FRAME_PERIOD;
+        timer = new Timer(sendDelay, this);
         timer.setInitialDelay(0);
         timer.setCoalesce(true);
 
-
         //allocate memory for the sending buffer
-        buf = new byte[15000]; 
-
+        buf = new byte[20000]; 
 
         //Handler to close the main window
         addWindowListener(new WindowAdapter() {
@@ -104,6 +112,9 @@ public class Server extends JFrame implements ActionListener
         //GUI:
         label = new JLabel("Send frame #        ", JLabel.CENTER);
         getContentPane().add(label, BorderLayout.CENTER);
+
+        //Video encoding and quality
+        imgTranslator = new ImageTranslator(0.8f);
     }
           
     //------------------------------------
@@ -220,6 +231,11 @@ public class Server extends JFrame implements ActionListener
                 //get next frame to send from the video, as well as its size
                 int image_length = video.getnextframe(buf);
 
+                //adjust quality of the image
+                byte[] temp = imgTranslator.compress(Arrays.copyOfRange(buf, 0, image_length));
+                System.out.println("Frame size: " + temp.length + " " + buf.length);
+                System.arraycopy(temp, 0, buf, 0, temp.length);
+
                 //Builds an RTPpacket object containing the frame
                 RTPpacket rtp_packet = new RTPpacket(MJPEG_TYPE, imagenb, imagenb*FRAME_PERIOD, buf, image_length);
                 
@@ -253,8 +269,10 @@ public class Server extends JFrame implements ActionListener
         }
     }
 
-    // A listener for RTCP packets sent from client
-    public class RtcpReceiver implements ActionListener {
+    //------------------------
+    //Listener for RTCP packets sent from client
+    //------------------------
+    class RtcpReceiver implements ActionListener {
         private Timer rtcpTimer;
         private byte[] rtcpBuf;
         int interval;
@@ -293,6 +311,58 @@ public class Server extends JFrame implements ActionListener
 
         public void stopRcv() {
             rtcpTimer.stop();
+        }
+    }
+
+    //------------------------------------
+    //Translate an image to different encoding or quality
+    //------------------------------------
+    class ImageTranslator {
+
+        private float compressionQuality;
+        private ByteArrayOutputStream baos;
+        private BufferedImage image;
+        private Iterator<ImageWriter>writers;
+        private ImageWriter writer;
+        private ImageWriteParam param;
+        private ImageOutputStream ios;
+
+        public ImageTranslator(float cq) {
+            compressionQuality = cq;
+
+            try {
+                baos =  new ByteArrayOutputStream();
+                ios = ImageIO.createImageOutputStream(baos);
+
+                writers = ImageIO.getImageWritersByFormatName("jpeg");
+                writer = (ImageWriter)writers.next();
+                writer.setOutput(ios);
+
+                param = writer.getDefaultWriteParam();
+                param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+                param.setCompressionQuality(compressionQuality);
+
+            } catch (Exception ex) {
+                System.out.println("Exception caught: "+ex);
+                System.exit(0);
+            }
+        }
+
+        public byte[] compress(byte[] imageBytes) {
+            try {
+                baos.reset();
+                image = ImageIO.read(new ByteArrayInputStream(imageBytes));
+                writer.write(null, new IIOImage(image, null, null), param);
+            } catch (Exception ex) {
+                System.out.println("Exception caught: "+ex);
+                System.exit(0);
+            }
+            return baos.toByteArray();
+        }
+
+        public void setCompressionQuality(float cq) {
+            compressionQuality = cq;
+            param.setCompressionQuality(compressionQuality);
         }
     }
 

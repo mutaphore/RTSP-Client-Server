@@ -492,7 +492,7 @@ public class Client{
     //------------------------------------
     class FrameSynchronizer {
 
-        private ArrayDeque<Image> iq;
+        private ArrayDeque<Image> queue;
         private int bufSize;
         private int curSeqNb;
         private Image lastImage;
@@ -500,30 +500,30 @@ public class Client{
         public FrameSynchronizer(int bsize) {
             curSeqNb = 1;
             bufSize = bsize;
-            iq = new ArrayDeque<Image>(bufSize);
+            queue = new ArrayDeque<Image>(bufSize);
         }
 
         //synchronize frames based on their sequence number
         public void addFrame(Image image, int seqNum) {
             if (seqNum < curSeqNb) {
-                iq.add(lastImage);
+                queue.add(lastImage);
             }
             else if (seqNum > curSeqNb) {
                 for (int i = curSeqNb; i < seqNum; i++) {
-                    iq.add(lastImage);
+                    queue.add(lastImage);
                 }
-                iq.add(image);
+                queue.add(image);
             }
             else {
-                iq.add(image);
+                queue.add(image);
             }
         }
 
         //get the next synchronized frame
         public Image nextFrame() {
             curSeqNb++;
-            lastImage = iq.peekLast();
-            return iq.remove();
+            lastImage = queue.peekLast();
+            return queue.remove();
         }
     }
 
@@ -555,7 +555,7 @@ public class Client{
                 tokens = new StringTokenizer(SessionLine);
                 String temp = tokens.nextToken();
                 //if state == INIT gets the Session Id from the SessionLine
-                if (temp.compareTo("Session:") == 0 && state == INIT) {
+                if (state == INIT && temp.compareTo("Session:") == 0) {
                     RTSPid = Integer.parseInt(tokens.nextToken());
                 }
                 else if (temp.compareTo("Content-Base:") == 0) {
