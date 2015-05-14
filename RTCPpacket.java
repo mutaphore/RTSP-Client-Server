@@ -82,10 +82,12 @@ class RTCPpacket {
     	header = new byte[HEADER_SIZE];
     	body = new byte[BODY_SIZE];
 
-    	for (int i = 0; i < HEADER_SIZE; i++)
-    		header[i] = packet[i];
-    	for (int i = HEADER_SIZE; i < packet_size; i++)
-    		body[i - HEADER_SIZE] = packet[i];
+    	// for (int i = 0; i < HEADER_SIZE; i++)
+    	// 	header[i] = packet[i];
+        System.arraycopy(packet, 0, header, 0, HEADER_SIZE);
+    	// for (int i = HEADER_SIZE; i < packet_size; i++)
+    	// 	body[i - HEADER_SIZE] = packet[i];
+        System.arraycopy(packet, HEADER_SIZE, body, 0, BODY_SIZE);
 
     	// Parse header fields
         Version = (header[0] & 0xFF) >> 6;
