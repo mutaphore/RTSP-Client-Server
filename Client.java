@@ -79,6 +79,8 @@ public class Client{
     int statCumLost;            //Number of packets lost
     int statExpRtpNb;           //Expected Sequence number of RTP messages within the session
     int statHighSeqNb;          //Highest sequence number received in session
+
+    FrameSynchronizer fsynch;
    
     //--------------------------
     //Constructor
@@ -144,6 +146,9 @@ public class Client{
 
         //allocate enough memory for the buffer used to receive data from the server
         buf = new byte[15000];    
+
+        //create the frame synchronizer
+        fsynch = new FrameSynchronizer(100);
     }
 
     //------------------------------------
@@ -266,7 +271,6 @@ public class Client{
         }
     }
 
-
     //Handler for Pause button
     //-----------------------
     class pauseButtonListener implements ActionListener {
@@ -358,7 +362,6 @@ public class Client{
     //------------------------------------
     //Handler for timer
     //------------------------------------
-    
     class timerListener implements ActionListener {
 
         public void actionPerformed(ActionEvent e) {
@@ -392,7 +395,7 @@ public class Client{
 
                 //compute stats and update the label in GUI
                 statExpRtpNb++;
-                f (seqNb > statHighSeqNb) {
+                if (seqNb > statHighSeqNb) {
                     statHighSeqNb = seqNb;
                 }
                 if (statExpRtpNb != seqNb) {
@@ -405,7 +408,9 @@ public class Client{
 
                 //get an Image object from the payload bitstream
                 Toolkit toolkit = Toolkit.getDefaultToolkit();
-                Image image = toolkit.createImage(payload, 0, payload_length);
+                fsynch.addFrame(toolkit.createImage(payload, 0, payload_length), seqNb);
+                Image image = fsynch.nextFrame();
+                // Image image = toolkit.createImage(payload, 0, payload_length);
 
                 //display the image as an ImageIcon object
                 icon = new ImageIcon(image);
@@ -481,6 +486,46 @@ public class Client{
         // Stop sending RTCP packets
         public void stopSend() {
             rtcpTimer.stop();
+        }
+    }
+
+    //------------------------------------
+    //Synchronize frames
+    //------------------------------------
+    class FrameSynchronizer {
+
+        private ArrayDeque<Image> iq;
+        private int bufSize;
+        private int highSeqNb;
+        private int curSeqNb;
+        private Image lastImage;
+
+        public FrameSynchronizer(int bsize) {
+            bufSize = bsize;
+            iq = new ArrayDeque<Image>(bufSize);
+            curSeqNb = 1;
+        }
+
+        public void addFrame(Image image, int seqNum) {
+            if (seqNum < curSeqNb) {
+                // Image copy = new Image(image, SWT.IMAGE_COPY);
+                iq.add(lastImage);
+            }
+            else if (seqNum > curSeqNb) {
+                for (int i = curSeqNb; i < seqNum; i++) {
+                    iq.add(lastImage);
+                }
+                iq.add(image);
+            }
+            else {
+                iq.add(image);
+            }
+        }
+
+        public Image nextFrame() {
+            curSeqNb++;
+            lastImage = iq.peekLast();
+            return iq.remove();
         }
     }
 
