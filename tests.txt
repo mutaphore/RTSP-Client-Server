@@ -7,9 +7,13 @@ Testing Methods
 - Simulate fluctuating connection stability by sending random fraction lost values back
   to the server via RTCP packets. The server should adjust the video quality sent back
   according the the congestion conditions.
+- Similar to previous item, but test to see if the data flow rate has indeed been reduced
+  by the server side congestion control algorithm.
 - Run Client on FunkyServer to see if it is able synchronize dropped frames properly.
 - Modify the Server code to purposely generate out of sync frames and see if the client 
   can synchronize and show appropriate frames.
 - Test for correct packets drop rate statistics. By knowing a fixed amount of dropped
   packets in periodic intervals, see if the client side is showing the correct stats.
+- Test for the correct values in header fields and body fields of RTP packets and RTCP 
+  packets thats sent between the server and client.
 
