@@ -47,6 +47,12 @@ the requester:
 - Video encoding of the video transmitted over RTP
 - RTSP ID of the established session
 
+In the client GUI a "Session" button have been created so the user can test the
+DESCRIBE method functionality. You should see printout to stdout of the response
+coming back from the server when the Session button is clicked. Note that in 
+order to use Session method the SETUP request must have been called already so
+the server is in INIT state.
+
 Server and client both contain optimizations and traffic control mechanisms. The
 framework providing communication between client and server on QoS data is the
 RTCP protocol described under RFC 1889. For this I created a new class called 

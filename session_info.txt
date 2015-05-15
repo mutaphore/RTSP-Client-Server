@@ -1,7 +1,0 @@
-Session Information
-
-RTSP Session ID: 123456
-Filename: movie.Mjpeg
-Payload Type: 26
-Frame Period: 100
-Video Length: 500
