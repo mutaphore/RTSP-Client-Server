@@ -56,10 +56,91 @@ It periodically checks the statistics feedback from client (via RTCP packets) an
 adjusts the rate to send RTP packets to the client. Congestion level is divided
 into 4 levels from 1 to 4 represented by the congestionLevel variable, with 0 
 being not congested. Calculations on the congestion level are determined primarily
-by the fractionLost field in the RTCP packet sent by the client
+by the fractionLost field in the RTCP packet sent by the client.
+
+In addtion to Congestion Control, the server side also provides adaptive video
+compression/encoding to optimize the size of video frames to send to the client
+under heavy traffic conditions. The ImageTranslator class does the job of compressing
+a video frame bitstream into a lower quality. By sacrificing a lower quality video,
+smaller packets are being sent over the wire and thereby reduces the congestion
+in the network.
+
+On the client side, the class FrameSynchronizer is created to solve the problem
+of organizing frames that was sent over out of order sequence numbers. It achieves
+this by using a buffer and keeps track of the expected sequence number versus
+the actual sequence number received. If there is a discrepancy, it buffers the
+frame and fills the gap with copies of the old frame that was last shown. The
+algorithm in this Synchronizer solves the problem of the FunkyServer class. See 
+below Extra section for explaination.
+
+
+Extra
+-----
+The problem with FunkyServer is that it sends old frames intermittently. As an
+example, the sequence number it sends to the client would be:
+
+348, 349, 350, 351, 352, 308, 308, 308, 308, 308, 308, 359
+
+See that it replaced frames between frames 352 and 359 with 308. My client program
+has created a class FrameSynchronizer that will fix this problem. Because a video
+should not "go back in time", i.e go from 352 to 308, the appropriate frame numbers 
+to show the audience in the above example should be:
+
+348, 349, 350, 351, 352, 352, 352, 352, 352, 352, 352, 359
+
+FrameSynchronizer will buffer frames and check for incoming sequence number. If
+they are out of sync, it copies the latest frame and fills in the gap in the missed
+frames. That way the video would just "freeze" and not show the "go back in time"
+effect shown previously.
+
 
 Main Method
 -----------
 Both server and client each contain a main method and should be executed separately
 on a server machine and client machine. They could also be executed on the same 
 machine but each running in a different terminal process.
+
+
+Notes on Running the Client/Server Programs
+-------------------------------------------
+To compile all *.java files, please use the makefile I created. Run the following
+command in bash to compile the source code:
+
+$ make
+
+I've already created the following scripts to run each of the components in this
+project:
+
+run_server - runs the server
+run_client - runs the client
+run_funky - runs the FunkyServer
+
+After compiling the files, simply do the following commands to run each program:
+
+$ ./run_server
+$ ./run_client
+$ ./run_funky
+
+Note that the client and server are assumed to be running on the same computer 
+using localhost address port 1051 by default. If for some reason any of these
+parameters need to be changed, simply open the run_* files and modify the variables.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
