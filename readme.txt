@@ -1,4 +1,4 @@
-Readme
+README
 ======
 
 Design/Implementation
@@ -46,4 +46,20 @@ the requester:
 - RTSP port of the server
 - Video encoding of the video transmitted over RTP
 - RTSP ID of the established session
-- 
+
+Server and client both contain optimizations and traffic control mechanisms. The
+framework providing communication between client and server on QoS data is the
+RTCP protocol described under RFC 1889. For this I created a new class called 
+RTCPpacket that represents a RTCP packet. Specifics can be found on the RFC. On the
+server side, the class responsible for congestion control is CongestionController.
+It periodically checks the statistics feedback from client (via RTCP packets) and
+adjusts the rate to send RTP packets to the client. Congestion level is divided
+into 4 levels from 1 to 4 represented by the congestionLevel variable, with 0 
+being not congested. Calculations on the congestion level are determined primarily
+by the fractionLost field in the RTCP packet sent by the client
+
+Main Method
+-----------
+Both server and client each contain a main method and should be executed separately
+on a server machine and client machine. They could also be executed on the same 
+machine but each running in a different terminal process.
