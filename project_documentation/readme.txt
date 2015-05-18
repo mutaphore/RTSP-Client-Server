@@ -56,8 +56,10 @@ the server is in INIT state.
 Server and client both contain optimizations and traffic control mechanisms. The
 framework providing communication between client and server on QoS data is the
 RTCP protocol described under RFC 1889. For this I created a new class called 
-RTCPpacket that represents a RTCP packet. Specifics can be found on the RFC. On the
-server side, the class responsible for congestion control is CongestionController.
+RTCPpacket that represents a RTCP packet. Specifics can be found on the RFC. The
+RTCP protocol is built on top of the UDP transport protocol to have minimal overhead.
+The amount of RTCP packets send via UDP is much less than RTP to minimize traffic. On 
+the server side, the class responsible for congestion control is CongestionController.
 It periodically checks the statistics feedback from client (via RTCP packets) and
 adjusts the rate to send RTP packets to the client. Congestion level is divided
 into 4 levels from 1 to 4 represented by the congestionLevel variable, with 0 

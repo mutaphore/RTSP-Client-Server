@@ -372,7 +372,7 @@ public class Client{
             try {
                 //receive the DP from the socket, save time for stats
                 RTPsocket.receive(rcvdp);
-                
+
                 double curTime = System.currentTimeMillis();
                 statTotalPlayTime += curTime - statStartTime; 
                 statStartTime = curTime;
@@ -423,7 +423,6 @@ public class Client{
             catch (IOException ioe) {
                 System.out.println("Exception caught: "+ioe);
             }
-
         }
     }
 
