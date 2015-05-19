@@ -82,8 +82,8 @@ algorithm in this Synchronizer solves the problem of the FunkyServer class. See
 below Extra section for explaination.
 
 
-Extra
------
+FunkyServer (Extra)
+-------------------
 The problem with FunkyServer is that it sends old frames intermittently. As an
 example, the sequence number it sends to the client would be:
 
@@ -105,14 +105,14 @@ effect shown previously.
 Main Method
 -----------
 Both server and client each contain a main method and should be executed separately
-on a server machine and client machine. They could also be executed on the same 
-machine but each running in a different terminal process.
+on a server machine and client machine. Or they could both be executed on the same 
+machine but running in separate terminal processes.
 
 
-Notes on Running the Client/Server Programs
+HOWTO Run Client/Server Programs
 -------------------------------------------
-To compile all *.java files, please use the makefile I created. Run the following
-command in bash to compile the source code:
+First, compile all *.java files, please use the makefile provided. Run the following
+commands in bash to compile the java source code (tested with java version 1.7):
 
 $ make
 
@@ -123,15 +123,16 @@ run_server - runs the server
 run_client - runs the client
 run_funky - runs the FunkyServer
 
-After compiling the files, simply do the following commands to run each program:
+After compiling the files, simply type the following commands to run each program:
 
 $ ./run_server
 $ ./run_client
-$ ./run_funky
+$ ./run_funky   <-- Copy FunkyServer class files from extra/ before running this
 
 Note that the client and server are assumed to be running on the same computer 
-using localhost address port 1051 by default. If for some reason any of these
-parameters need to be changed, simply open the run_* files and modify the variables.
+i.e. localhost. By default, server ip address is localhost and port number is 1051. 
+If for some reason any of these parameters need to be changed, simply open 
+the run_* files and modify the address and port variables.
 
 
 

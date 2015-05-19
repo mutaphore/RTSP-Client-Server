@@ -4,6 +4,7 @@ Testing Methods
 - While running client, click on different combinations of buttons: SETUP, PLAY, PAUSE,
   STOP and SESSION. Test for the correctness of standard output to see if they are the
   expected values.
+- Test the DESCRIBE method to see if it is sending back correct session information.
 - Simulate fluctuating connection stability by sending random fraction lost values back
   to the server via RTCP packets. The server should adjust the video quality sent back
   according the the congestion conditions.
@@ -14,6 +15,8 @@ Testing Methods
   can synchronize and show appropriate frames.
 - Test for correct packets drop rate statistics. By knowing a fixed amount of dropped
   packets in periodic intervals, see if the client side is showing the correct stats.
+  Also check to see if the total bytes received statistic is consistent with the movie
+  file size.
 - Test for the correct values in header fields and body fields of RTP packets and RTCP 
   packets thats sent between the server and client.
 
