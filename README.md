@@ -2,7 +2,7 @@ README
 ======
 
 Design/Implementation
----------------------
+----
 
 Both server and client side code have been incorporated with the features 
 defined by the project. In addition to having the basic funtionality of the
@@ -82,19 +82,23 @@ algorithm in this Synchronizer solves the problem of the FunkyServer class. See
 below Extra section for explaination.
 
 
-FunkyServer (Extra)
--------------------
+FunkyServer
+----
 The problem with FunkyServer is that it sends old frames intermittently. As an
 example, the sequence number it sends to the client would be:
 
+```
 348, 349, 350, 351, 352, 308, 308, 308, 308, 308, 308, 359
+```
 
 See that it replaced frames between frames 352 and 359 with 308. My client program
 has created a class FrameSynchronizer that will fix this problem. Because a video
 should not "go back in time", i.e go from 352 to 308, the appropriate frame numbers 
 to show the audience in the above example should be:
 
+```
 348, 349, 350, 351, 352, 352, 352, 352, 352, 352, 352, 359
+```
 
 FrameSynchronizer will buffer frames and check for incoming sequence number. If
 they are out of sync, it copies the latest frame and fills in the gap in the missed
@@ -103,33 +107,52 @@ effect shown previously.
 
 
 Main Method
------------
+----
 Both server and client each contain a main method and should be executed separately
 on a server machine and client machine. Or they could both be executed on the same 
 machine but running in separate terminal processes.
 
 
-HOWTO Run Client/Server Programs
--------------------------------------------
-First, compile all *.java files, please use the makefile provided. Run the following
+How to Run Client/Server Programs
+----
+First, compile all ` *.java files`, please use the makefile provided. Run the following
 commands in bash to compile the java source code (tested with java version 1.7):
 
+```
 $ make
+```
 
 I've already created the following scripts to run each of the components in this
 project:
 
-run_server - runs the server
-run_client - runs the client
-run_funky - runs the FunkyServer
+- run_server: runs the server
+- run_client: runs the client
+- run_funky: runs the FunkyServer
 
 After compiling the files, simply type the following commands to run each program:
 
+```
 $ ./run_server
 $ ./run_client
-$ ./run_funky   <-- Copy FunkyServer class files from extra/ before running this
+$ ./run_funky  // Copy FunkyServer class files from extra/ before running this
+```
 
 Note that the client and server are assumed to be running on the same computer 
 i.e. localhost. By default, server ip address is localhost and port number is 1051. 
 If for some reason any of these parameters need to be changed, simply open 
-the run_* files and modify the address and port variables.
+the `run_*` files and modify the address and port variables.
+
+
+Licensing
+----
+Copyright 2016 Dewei Chen
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
