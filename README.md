@@ -4,7 +4,7 @@ RTSP-Client-Server
 
 Introduction
 ----
-Streaming videos are ubiquitous in the web today. The internet, originally designed for simple text/document based transfers using protocols such as the HTTP, is the platform on which streaming media can be passed from one end of the world to another. In order to stream data across networks efficiently, the layers of the network stack must be enhanced with capabilities to pass streaming data efficiently while not congesting the network as a whole. This project explores one of such capabilities in the application layer by using the real time streaming protocol (RTP) and the control protocol (RTCP) which provides the capability for network congestion control.
+Streaming videos are ubiquitous in the web today. The internet, originally designed for simple text/document based transfers using protocols such as the HTTP, is the platform on which streaming media can be passed from one end of the world to another. In order to stream data across networks efficiently, the layers of the network stack must be enhanced with capabilities to pass streaming data efficiently while not congesting the network as a whole. This project explores one of such capabilities in the application layer by using the [real time streaming protocol](https://www.ietf.org/rfc/rfc2326.txt) (RTP) and the control protocol (RTCP) which provides the capability for network congestion control.
 
 
 Architecture
