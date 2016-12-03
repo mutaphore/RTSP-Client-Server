@@ -4,7 +4,7 @@ RTSP-Client-Server
 
 Introduction
 ----
-Streaming videos are ubiquitous in the web today. The internet, originally designed for simple text/document based transfers using protocols such as the HTTP, is the platform on which streaming media can be passed from one end of the world to another. In order to stream data across networks efficiently, the layers of the network stack must be enhanced with capabilities to pass streaming data efficiently while not congesting the network as a whole. This project explores one of such capabilities in the application layer by using the [real time streaming protocol](https://www.ietf.org/rfc/rfc2326.txt) (RTP) and the control protocol (RTCP) which provides the capability for network congestion control.
+Streaming videos are ubiquitous in the web today. The internet, originally designed for simple text/document based transfers using protocols such as the HTTP, is the platform on which streaming media is passed from one end of the world to another. In order to stream data across networks efficiently, the layers of the network stack must be enhanced with capabilities to transfer it efficiently while not congesting the network as a whole. This project explores one of such capabilities in the application layer by using the [real time streaming protocol](https://www.ietf.org/rfc/rfc2326.txt) (RTP) and the control protocol (RTCP) which provides the capability for network congestion control.
 
 
 Architecture
@@ -14,14 +14,13 @@ This project uses a client-server architecture. Although RTP is a scalable proto
 ![Client Server Architecture](/images/rtsp1.png)
 
 
-Design/Implementation
+Design and Implementation
 ----
-Both server and client side code have been incorporated with the features 
-defined by the project. In addition to having the basic funtionality of the
-RTSP and RTP protocols, I have also implemented major componets to support
-Session Statistics, RTSP request method DESCRIBE and various performance
-optimizations that provides traffic control mechanisms. The following paragraphs
-will discuss each of these components implementation in detail.
+In addition to having the basic funtionality of the
+RTSP and RTP protocols, there are also implementation of support for
+Session Statistics, RTSP request method **DESCRIBE** and performance
+optimizations using traffic control mechanisms. Here we will discuss each of 
+these components in more detail.
 
 For providing statistical feedback to the client, I have created a set of labels
 in the user GUI to show the statistics on:
@@ -44,14 +43,14 @@ The client measures the interval between each received packet and sums them up t
 find the total time the movie is playing. This is then used for calculating the 
 overall data rate statistic.
 
-The DESCRIBE RTSP method is sent directly via the same TCP connection that was
+The **DESCRIBE** RTSP method is sent directly via the same connection that was
 established for RTSP requests. It simply makes the request using the same method
-that was used to make other RTSP requests such as SETUP and PLAY. A new response
-parsing function is implemented since the response message format for DESCRIBE
-is different than the others. The DESCRIBE request is made with the accepted
-file type to be "appliation/sdp", so we are expecting an SDP formatted string in
+that was used to make other RTSP requests such as **SETUP** and **PLAY**. A new response
+parsing function is implemented since the response message format for **DESCRIBE**
+is different than the others. The **DESCRIBE** request is made with the accepted
+file type to be `appliation/sdp`, so we are expecting an SDP formatted string in
 the body of the response message. On the server side, methods have been added
-to handle an incoming DESCRIBE request. The response will be created in SDP format
+to handle an incoming **DESCRIBE** request. The response will be created in SDP format
 following the SDP specifications. The following information is provided back to
 the requester:
 
@@ -60,18 +59,18 @@ the requester:
 - RTSP ID of the established session
 
 In the client GUI a "Session" button have been created so the user can test the
-DESCRIBE method functionality. You should see printout to stdout of the response
+**DESCRIBE** method functionality. You should see printout to stdout of the response
 coming back from the server when the Session button is clicked. Note that in 
-order to use Session method the SETUP request must have been called already so
-the server is in INIT state.
+order to use Session method the **SETUP** request must have been called already so
+the server is in **INIT** state.
 
 Server and client both contain optimizations and traffic control mechanisms. The
 framework providing communication between client and server on QoS data is the
 RTCP protocol described under RFC 1889. For this I created a new class called 
-RTCPpacket that represents a RTCP packet. Specifics can be found on the RFC. The
+`RTCPpacket` that represents a RTCP packet. Specifics can be found on the RFC. The
 RTCP protocol is built on top of the UDP transport protocol to have minimal overhead.
 The amount of RTCP packets send via UDP is much less than RTP to minimize traffic. On 
-the server side, the class responsible for congestion control is CongestionController.
+the server side, the class responsible for congestion control is `CongestionController`.
 It periodically checks the statistics feedback from client (via RTCP packets) and
 adjusts the rate to send RTP packets to the client. Congestion level is divided
 into 4 levels from 1 to 4 represented by the congestionLevel variable, with 0 
@@ -80,18 +79,18 @@ by the fractionLost field in the RTCP packet sent by the client.
 
 In addtion to Congestion Control, the server side also provides adaptive video
 compression/encoding to optimize the size of video frames to send to the client
-under heavy traffic conditions. The ImageTranslator class does the job of compressing
+under heavy traffic conditions. The `ImageTranslator` class does the job of compressing
 a video frame bitstream into a lower quality. By sacrificing a lower quality video,
 smaller packets are being sent over the wire and thereby reduces the congestion
 in the network.
 
-On the client side, the class FrameSynchronizer is created to solve the problem
+On the client side, the class `FrameSynchronizer` is created to solve the problem
 of organizing frames that was sent over out of order sequence numbers. It achieves
 this by using a buffer and keeps track of the expected sequence number versus
 the actual sequence number received. If there is a discrepancy, it buffers the
 frame and fills the gap with copies of the old frame that was last shown. The
-algorithm in this Synchronizer solves the problem of the FunkyServer class. See 
-below Extra section for explaination.
+algorithm in this Synchronizer solves the problem of the FunkyServer class, see 
+below section.
 
 
 FunkyServer
@@ -103,8 +102,8 @@ example, the sequence number it sends to the client would be:
 348, 349, 350, 351, 352, 308, 308, 308, 308, 308, 308, 359
 ```
 
-See that it replaced frames between frames 352 and 359 with 308. My client program
-has created a class FrameSynchronizer that will fix this problem. Because a video
+See that it replaced frames between frames 352 and 359 with 308. The client program
+has a class `FrameSynchronizer` that will fix this problem. Because a video
 should not "go back in time", i.e go from 352 to 308, the appropriate frame numbers 
 to show the audience in the above example should be:
 
@@ -112,20 +111,20 @@ to show the audience in the above example should be:
 348, 349, 350, 351, 352, 352, 352, 352, 352, 352, 352, 359
 ```
 
-FrameSynchronizer will buffer frames and check for incoming sequence number. If
+`FrameSynchronizer` will buffer frames and check for incoming sequence number. If
 they are out of sync, it copies the latest frame and fills in the gap in the missed
-frames. That way the video would just "freeze" and not show the "go back in time"
-effect shown previously.
+frames. That way the video would just "freeze" and not have the "go back in time"
+effect.
 
 
-Main Method
+Main
 ----
 Both server and client each contain a main method and should be executed separately
 on a server machine and client machine. Or they could both be executed on the same 
-machine but running in separate terminal processes.
+machine but running in separate processes.
 
 
-How to Run Client/Server Programs
+Running Client/Server Programs
 ----
 First, compile all `*.java` files, please use the makefile provided. Run the following
 commands in bash to compile the java source code (tested with java version 1.7):
@@ -134,19 +133,14 @@ commands in bash to compile the java source code (tested with java version 1.7):
 $ make
 ```
 
-I've already created the following scripts to run each of the components in this
-project:
-
-- run_server: runs the server
-- run_client: runs the client
-- run_funky: runs the FunkyServer
+To re-build, run `make clean` to remove all class files first.
 
 After compiling the files, simply type the following commands to run each program:
 
 ```
-$ ./run_server
-$ ./run_client
-$ ./run_funky  // Copy FunkyServer class files from extra/ before running this
+$ ./run_server # run the server
+$ ./run_client # run the client
+$ ./run_funky  # run the funky server (copy FunkyServer class files from extra/ before running this)
 ```
 
 Note that the client and server are assumed to be running on the same computer 
