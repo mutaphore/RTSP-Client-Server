@@ -127,7 +127,7 @@ machine but running in separate processes.
 Running Client/Server Programs
 ----
 First, compile all `*.java` files, please use the makefile provided. Run the following
-commands in bash to compile the java source code (tested with java version 1.7):
+commands in bash to compile the java source code (tested with java version 1.8):
 
 ```
 $ make
