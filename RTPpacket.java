@@ -26,8 +26,6 @@ public class RTPpacket{
     //Bitstream of the RTP payload
     public byte[] payload;
     
-
-
     //--------------------------
     //Constructor of an RTPpacket object from header fields and payload bitstream
     //--------------------------
@@ -46,14 +44,9 @@ public class RTPpacket{
         PayloadType = PType;
         
         //build the header bistream:
-        //--------------------------
         header = new byte[HEADER_SIZE];
 
-        //.............
-        //TO COMPLETE
-        //.............
         //fill the header array of byte with RTP header fields
-
         header[0] = (byte)(Version << 6 | Padding << 5 | Extension << 4 | CC);
         header[1] = (byte)(Marker << 7 | PayloadType & 0x000000FF);
         header[2] = (byte)(SequenceNumber >> 8);
@@ -68,7 +61,6 @@ public class RTPpacket{
         header[11] = (byte)(Ssrc & 0xFF);
 
         //fill the payload bitstream:
-        //--------------------------
         payload_size = data_length;
         payload = new byte[data_length];
 

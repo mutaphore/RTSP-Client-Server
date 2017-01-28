@@ -12,8 +12,7 @@ import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.Timer;
 
-public class Client{
-
+public class Client {
     //GUI
     //----
     JFrame f = new JFrame("Client");
@@ -32,12 +31,12 @@ public class Client{
 
     //RTP variables:
     //----------------
-    DatagramPacket rcvdp; //UDP packet received from the server
-    DatagramSocket RTPsocket; //socket to be used to send and receive UDP packets
+    DatagramPacket rcvdp;            //UDP packet received from the server
+    DatagramSocket RTPsocket;        //socket to be used to send and receive UDP packets
     static int RTP_RCV_PORT = 25000; //port where the client will receive the RTP packets
     
     Timer timer; //timer used to receive data from the UDP socket
-    byte[] buf; //buffer used to store data received from the server 
+    byte[] buf;  //buffer used to store data received from the server 
    
     //RTSP variables
     //----------------
@@ -45,15 +44,16 @@ public class Client{
     final static int INIT = 0;
     final static int READY = 1;
     final static int PLAYING = 2;
-    static int state; //RTSP state == INIT or READY or PLAYING
-    Socket RTSPsocket; //socket used to send/receive RTSP messages
+    static int state;            //RTSP state == INIT or READY or PLAYING
+    Socket RTSPsocket;           //socket used to send/receive RTSP messages
     InetAddress ServerIPAddr;
+
     //input and output stream filters
     static BufferedReader RTSPBufferedReader;
     static BufferedWriter RTSPBufferedWriter;
     static String VideoFileName; //video file to request to the server
-    int RTSPSeqNb = 0; //Sequence number of RTSP messages within the session
-    int RTSPid = 0; // ID of the RTSP session (given by the RTSP Server)
+    int RTSPSeqNb = 0;           //Sequence number of RTSP messages within the session
+    String RTSPid;              // ID of the RTSP session (given by the RTSP Server)
 
     final static String CRLF = "\r\n";
     final static String DES_FNAME = "session_info.txt";
@@ -154,8 +154,7 @@ public class Client{
     //------------------------------------
     //main
     //------------------------------------
-    public static void main(String argv[]) throws Exception
-    {
+    public static void main(String argv[]) throws Exception {
         //Create a Client object
         Client theClient = new Client();
         
@@ -188,13 +187,9 @@ public class Client{
     //Handler for buttons
     //------------------------------------
 
-    //.............
-    //TO COMPLETE
-    //.............
-
     //Handler for Setup button
     //-----------------------
-    class setupButtonListener implements ActionListener{
+    class setupButtonListener implements ActionListener {
 
         public void actionPerformed(ActionEvent e){
 
@@ -219,10 +214,10 @@ public class Client{
                 RTSPSeqNb = 1;
 
                 //Send SETUP message to the server
-                send_RTSP_request("SETUP");
+                sendRequest("SETUP");
 
                 //Wait for the response 
-                if (parse_server_response() != 200)
+                if (parseServerResponse() != 200)
                     System.out.println("Invalid Server Response");
                 else 
                 {
@@ -251,10 +246,10 @@ public class Client{
                 RTSPSeqNb++;
 
                 //Send PLAY message to the server
-                send_RTSP_request("PLAY");
+                sendRequest("PLAY");
 
                 //Wait for the response 
-                if (parse_server_response() != 200) {
+                if (parseServerResponse() != 200) {
                     System.out.println("Invalid Server Response");
                 }
                 else {
@@ -285,10 +280,10 @@ public class Client{
                 RTSPSeqNb++;
 
                 //Send PAUSE message to the server
-                send_RTSP_request("PAUSE");
+                sendRequest("PAUSE");
 
                 //Wait for the response 
-                if (parse_server_response() != 200)
+                if (parseServerResponse() != 200)
                     System.out.println("Invalid Server Response");
                 else 
                 {
@@ -317,10 +312,10 @@ public class Client{
             RTSPSeqNb++;
 
             //Send TEARDOWN message to the server
-            send_RTSP_request("TEARDOWN");
+            sendRequest("TEARDOWN");
 
             //Wait for the response 
-            if (parse_server_response() != 200)
+            if (parseServerResponse() != 200)
                 System.out.println("Invalid Server Response");
             else {     
                 //change RTSP state and print out new state
@@ -347,10 +342,10 @@ public class Client{
             RTSPSeqNb++;
 
             //Send DESCRIBE message to the server
-            send_RTSP_request("DESCRIBE");
+            sendRequest("DESCRIBE");
 
             //Wait for the response 
-            if (parse_server_response() != 200) {
+            if (parseServerResponse() != 200) {
                 System.out.println("Invalid Server Response");
             }
             else {     
@@ -536,8 +531,7 @@ public class Client{
     //------------------------------------
     //Parse Server Response
     //------------------------------------
-    private int parse_server_response() 
-    {
+    private int parseServerResponse() {
         int reply_code = 0;
 
         try {
@@ -562,7 +556,7 @@ public class Client{
                 String temp = tokens.nextToken();
                 //if state == INIT gets the Session Id from the SessionLine
                 if (state == INIT && temp.compareTo("Session:") == 0) {
-                    RTSPid = Integer.parseInt(tokens.nextToken());
+                    RTSPid = tokens.nextToken();
                 }
                 else if (temp.compareTo("Content-Base:") == 0) {
                     // Get the DESCRIBE lines
@@ -592,8 +586,7 @@ public class Client{
     //Send RTSP Request
     //------------------------------------
 
-    private void send_RTSP_request(String request_type)
-    {
+    private void sendRequest(String request_type) {
         try {
             //Use the RTSPBufferedWriter to write to the RTSP socket
 
@@ -624,5 +617,3 @@ public class Client{
         }
     }    
 }
-
-//end of Class Client
