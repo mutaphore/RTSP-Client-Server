@@ -142,12 +142,16 @@ $ ./run_server # run the server
 $ ./run_client # run the client
 $ ./run_funky  # run the funky server (copy FunkyServer class files from extra/ before running this)
 ```
-![Caption](/images/RTSP-demo.gif)
 
 Note that the client and server are assumed to be running on the same computer 
 i.e. localhost. By default, server ip address is localhost and port number is 1051. 
 If for some reason any of these parameters need to be changed, simply open 
 the `run_*` files and modify the address and port variables.
+
+
+Demo
+----
+![Demo](/images/RTSP-demo.gif)
 
 
 Licensing
