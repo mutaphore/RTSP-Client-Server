@@ -140,7 +140,7 @@ After compiling the files, simply type the following commands to run each progra
 ```
 $ ./run_server # run the server
 $ ./run_client # run the client
-$ ./run_funky  # run the funky server (copy FunkyServer class files from extra/ before running this)
+$ ./run_funky  # run the funky server (copy FunkyServer class files from extras/ before running this)
 ```
 
 Note that the client and server are assumed to be running on the same computer 
